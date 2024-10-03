@@ -1,0 +1,7 @@
+boto3
+langchain
+langchain-aws
+anthropic
+chromadb
+langchain-chroma
+langchain-community
