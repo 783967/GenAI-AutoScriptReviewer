@@ -5,7 +5,7 @@ def triggerGitAPIPullPRComments():
     headers = {
         "Accept" : "application/vnd.github+json",
         "X-GitHub-Api-Version" :"2022-11-28",
-        "Authorization" : "Bearer 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"
+        "Authorization" : "<Token>"
     }
     githubBaseURL = "https://api.github.com"
     fetchAllReposURL = "/users/783967/repos"
