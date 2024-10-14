@@ -1,4 +1,6 @@
 import requests
+#from dotenv import Secret
+import os
 def triggerGitAPIPullPRComments():
     headers = {
         "Accept" : "application/vnd.github+json",
