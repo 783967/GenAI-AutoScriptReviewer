@@ -5,3 +5,4 @@ anthropic
 chromadb
 langchain-chroma
 langchain-community
+requests
