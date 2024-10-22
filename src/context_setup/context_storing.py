@@ -6,8 +6,10 @@ from langchain_chroma import Chroma
 from langchain_community.document_loaders import TextLoader
 from datetime import datetime
 
-# Base directory for storing persistent data
-BASE_DIRECTORY = r"C:\Users\2322191\AI_Gen\GenAI-AutoScriptReviewer\GenAI-AutoScriptReviewer\src\vectors"
+# Get dynamic base directory (root of the project)
+ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIRECTORY = os.path.join(ROOT_DIRECTORY, "src", "vectors")
+
 
 # Paths for different vector storage subfolders
 OLD_CODES_DIR = os.path.join(BASE_DIRECTORY, "old_codes")
