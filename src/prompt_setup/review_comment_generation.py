@@ -6,8 +6,10 @@ from langchain.schema import AIMessage
 import boto3
 from langchain_aws import BedrockEmbeddings
 
-# Persistent directories for storing different contexts
-base_persistent_dir = r"C:\Users\2322191\AI_Gen\GenAI-AutoScriptReviewer\GenAI-AutoScriptReviewer\src\vectors"
+# Get dynamic base directory (root of the project)
+ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+base_persistent_dir = os.path.join(ROOT_DIRECTORY, "src", "vectors")
+
 old_code_dir = os.path.join(base_persistent_dir, "old_codes")
 coding_standards_dir = os.path.join(base_persistent_dir, "coding_standards")
 review_comments_dir = os.path.join(base_persistent_dir, "review_comments")
