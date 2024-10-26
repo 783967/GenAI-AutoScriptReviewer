@@ -5,9 +5,12 @@ from langchain_aws import BedrockEmbeddings
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import TextLoader
 from datetime import datetime
+from FetchPRComments import *
 
-# Base directory for storing persistent data
-BASE_DIRECTORY = r"C:\Users\2322191\AI_Gen\GenAI-AutoScriptReviewer\GenAI-AutoScriptReviewer\src\vectors"
+# Get dynamic base directory (root of the project)
+ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIRECTORY = os.path.join(ROOT_DIRECTORY, "src", "vectors")
+
 
 # Paths for different vector storage subfolders
 OLD_CODES_DIR = os.path.join(BASE_DIRECTORY, "old_codes")
@@ -116,7 +119,7 @@ if __name__ == "__main__":
         r"C:\Users\viraj\eclipse-workspace2024AI\SeleniumFrameworkDesign\src\test\java\rahulshettyacademy\tests\ErrorValidationsTest.java",
         r"C:\Users\viraj\eclipse-workspace2024AI\SeleniumFrameworkDesign\src\test\java\rahulshettyacademy\tests\SubmitOrderTest.java"
     ]
-    previous_review_json = {"comments": "Good code, but consider adding error handling."}
-    reusable_utilities_json = {"function": "Utility method for API calls"}
+    previous_review_json = triggerGitAPIPullPRComments()
+    reusable_utilities_json = fetchReusableMethodsFromAutomationRepo()
     
     setup_context(reference_files, "https://google.github.io/styleguide/javaguide.html", previous_review_json, reusable_utilities_json)
