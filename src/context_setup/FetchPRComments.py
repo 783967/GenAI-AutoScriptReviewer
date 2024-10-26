@@ -7,7 +7,7 @@ def triggerGitAPIPullPRComments():
     headers = {
         "Accept" : "application/vnd.github+json",
         "X-GitHub-Api-Version" :"2022-11-28",
-        "Authorization" : "Bearer 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"
+        "Authorization" : "Bearer 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"
     }
 
     githubBaseURL = "https://api.github.com"
@@ -44,11 +44,11 @@ def fetchReusableMethodsFromAutomationRepo():
     headers = {
         "Accept" : "application/vnd.github+json",
         "X-GitHub-Api-Version" :"2022-11-28",
-        "Authorization" : "Bearer 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"
+        "Authorization" : "Bearer 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"
     }
 
     githubBaseURL = "https://api.github.com"
-    fetchFilesFromADirectory = "/repos/783967/SwagLabsAutomation/contents/src/test/java/swaglabs/common?ref=feature-swaglabs"
+    fetchFilesFromADirectory = "/repos/783967/SwagLabsAutomation/contents/src/test/java/swaglabs/common?ref=main"
 
     all_reusable_files =  requests.get(githubBaseURL + fetchFilesFromADirectory, headers= headers).json()
 
@@ -58,7 +58,7 @@ def fetchReusableMethodsFromAutomationRepo():
 
     all_files = []
     for item in download_urls:
-        r = requests.get(item)
+        r = requests.get(item, headers = headers)
         all_files.append(codecs.decode(r.content, 'unicode_escape'))
 
     for file in all_files:
@@ -66,4 +66,32 @@ def fetchReusableMethodsFromAutomationRepo():
     
     return all_files
 
+def fetchFilesFromOpenPR():
+    headers = {
+        "Accept" : "application/vnd.github+json",
+        "X-GitHub-Api-Version" :"2022-11-28",
+        "Authorization" : "Bearer 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"
+    }
+
+    githubBaseURL = "https://api.github.com"
+    fetchFilesFromADirectory = "/repos/783967/SwagLabsAutomation/pulls/2/files"
+
+    all_reusable_files =  requests.get(githubBaseURL + fetchFilesFromADirectory, headers= headers).json()
+    download_urls = []
+    for item in all_reusable_files:
+        content_url_data = item["contents_url"]
+        if ".log" not in content_url_data and ".html" not in content_url_data:
+            content_res = requests.get(item["contents_url"], headers = headers).json()
+            print(content_res)
+            download_urls.append(content_res["download_url"])
+
+    all_files = []
+    for item in download_urls:
+        r = requests.get(item, headers= headers)
+        all_files.append(codecs.decode(r.content, 'unicode_escape'))
+
+    for file in all_files:
+        print(file)
+    
+    return all_files
 fetchReusableMethodsFromAutomationRepo()
