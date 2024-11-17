@@ -1,13 +1,11 @@
 import os
-import json
 import boto3
-from langchain_chroma import Chroma
 
 # AWS S3 bucket name
 S3_BUCKET_NAME = "uploadchromadbcontext"
 
 # Initialize S3 client
-s3_client = boto3.client('s3')
+s3_client = boto3.client('s3', region_name='US West (Oregon) us-west-2')  # Add your AWS region
 
 # This function uploads a file to S3
 def upload_to_s3(file_path, bucket_name, s3_key):
@@ -27,5 +25,5 @@ def upload_chroma_db_to_s3(base_directory):
 
 # Example usage
 if __name__ == "__main__":
-    BASE_DIRECTORY = "s3://uploadchromadbcontext/chroma_db/"
+    BASE_DIRECTORY = ""  # Local directory path (/path/to/your/local/chroma_db)
     upload_chroma_db_to_s3(BASE_DIRECTORY)
