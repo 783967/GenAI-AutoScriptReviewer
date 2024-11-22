@@ -18,7 +18,7 @@ def download_from_s3(bucket_name, s3_key, download_path):
 # Example usage
 if __name__ == "__main__":
     ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Dynamic root directory path
-    base_persistent_dir = os.path.join(ROOT_DIRECTORY, "src", "vectors")
+    base_persistent_dir = os.path.join(ROOT_DIRECTORY, "S3FilesForChromaDb", "vectors")
 
     # Define additional directories
     old_code_dir = os.path.join(base_persistent_dir, "old_codes")

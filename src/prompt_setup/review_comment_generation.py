@@ -8,7 +8,7 @@ from langchain_aws import BedrockEmbeddings
 
 # Get dynamic base directory (root of the project)
 ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-base_persistent_dir = os.path.join(ROOT_DIRECTORY, "src", "vectors")
+base_persistent_dir = os.path.join(ROOT_DIRECTORY, "S3FilesForChromaDb", "vectors")
 
 old_code_dir = os.path.join(base_persistent_dir, "old_codes")
 coding_standards_dir = os.path.join(base_persistent_dir, "coding_standards")
