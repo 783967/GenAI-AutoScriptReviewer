@@ -5,6 +5,13 @@ from langchain_chroma import Chroma
 from langchain.schema import AIMessage
 import boto3
 from langchain_aws import BedrockEmbeddings
+import sys
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.abspath(os.path.join(current_dir, ".."))
+sys.path.append(src_dir)
+
+from context_setup.FetchPRComments import *
 
 # Get dynamic base directory (root of the project)
 ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -38,10 +45,10 @@ def query_similar_code(chroma_db, new_code_content):
 
 # Setup LLM
 def setup_llm():
-    client = boto3.client('bedrock-runtime', region_name='us-east-1')
+    client = boto3.client('bedrock-runtime', region_name='us-west-2')
     llm = ChatBedrock(
         credentials_profile_name='default',
-        model_id='anthropic.claude-3-sonnet-20240229-v1:0',
+        model_id='anthropic.claude-3-5-sonnet-20240620-v1:0',
         client=client
     )
     return llm
@@ -49,18 +56,23 @@ def setup_llm():
 # Run the code review with multiple contexts
 def run_code_review(llm, new_code, contexts):
     template = """
-    You are a code review assistant. Given the following reference contexts:
-    
-    Old Codes: {old_codes}
-    Google Coding Standards: {google_coding_standards}
-    Previous Review Comments: {review_comments}
-    Reusable Utilities: {reusable_utilities}
-    
-    Review the following new code:
+    You are a code review assistant. Use the following reference contexts to review the new code:
+
+    - **Old Codes**: {old_codes}
+    - **Google Coding Standards**: {google_coding_standards}
+    - **Previous Review Comments**: {review_comments}
+    - **Reusable Utilities**: {reusable_utilities}
+
+    Review the new code provided below:
     {new_code}
-    
-    Check if the new code follows the provided coding standards, previous reviews, and reference code.
-    Provide feedback, comments, and suggestions for improvement.
+
+    For each issue found, provide your feedback in the following format:
+
+    - **File Name**: Name of the file where the issue is located.
+    - **Line Number**: Exact line number of the issue.
+    - **Issue**: Concisely describe the issue. Use the tone of feedback from "Previous Review Comments" where applicable. 
+    - If the issue violates Google coding standards, explicitly state: "As per Google coding standards, this is incorrect."
+    - Do not include recommendations or additional explanations. Keep feedback precise and to the point.
     """
 
     prompt = PromptTemplate(
@@ -100,7 +112,7 @@ def code_review(new_code_file):
 
 # Example of how the code review would be run
 if __name__ == "__main__":
-    new_code_file = r"C:\Users\viraj\eclipse-workspace2024AI\SeleniumFrameworkDesign\src\test\java\rahulshettyacademy\tests\StandAloneTest.java"
+    new_code_file = r"C:\Users\2322191\Downloads\CommonMethods.java"
     review_comments = code_review(new_code_file)
     print(f"Review Comments:\n{review_comments.content}")
 
