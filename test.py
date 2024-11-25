@@ -1,0 +1,1 @@
+print("This is a test script which fires based on code commit done in SwagLabs Repo")
