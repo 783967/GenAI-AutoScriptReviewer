@@ -115,11 +115,8 @@ def setup_context(reference_files, google_coding_url, previous_review_json, reus
 # Example to run the setup
 if __name__ == "__main__":
     # Reference files
-    reference_files = [
-        r"C:\Users\viraj\eclipse-workspace2024AI\SeleniumFrameworkDesign\src\test\java\rahulshettyacademy\tests\ErrorValidationsTest.java",
-        r"C:\Users\viraj\eclipse-workspace2024AI\SeleniumFrameworkDesign\src\test\java\rahulshettyacademy\tests\SubmitOrderTest.java"
-    ]
-    previous_review_json = triggerGitAPIPullPRComments()
-    reusable_utilities_json = fetchReusableMethodsFromAutomationRepo()
+    reference_files = 'null' #Existing code in the repository
+    previous_review_json = triggerGitAPIPullPRComments() #Giving previous PR comments 
+    reusable_utilities_json = fetchReusableMethodsFromAutomationRepo() #src/main/Java utilities
     
     setup_context(reference_files, "https://google.github.io/styleguide/javaguide.html", previous_review_json, reusable_utilities_json)
