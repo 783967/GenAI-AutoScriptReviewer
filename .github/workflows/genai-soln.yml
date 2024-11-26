@@ -1,9 +1,10 @@
 name: Run Python Script
 
 on:
+  workflow_dispatch:
   repository_dispatch:
     types:
-      - trigger-from-java-repo
+      - pr-raised
 
 jobs:
   run-python-script:
