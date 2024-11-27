@@ -4,10 +4,11 @@ import os
 import codecs
 
 def triggerGitAPIPullPRComments():  
+    pat_token = os.getenv('REPO_ACCESS_TOKEN')
     headers = {
         "Accept" : "application/vnd.github+json",
         "X-GitHub-Api-Version" :"2022-11-28",
-        "Authorization" : "Bearer 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"
+        "Authorization" : f"Bearer {pat_token}"
     }
 
     githubBaseURL = "https://api.github.com"
@@ -23,17 +24,25 @@ def triggerGitAPIPullPRComments():
         githubPullCommentsEndpoint = "/repos/783967/"+repo+"/pulls/comments"
         response = requests.get(githubBaseURL + githubPullCommentsEndpoint, headers= headers)
 
-        list_pr_comments = []
         pr_data = response.json()
+        if len(pr_data) == 0:
+            continue
 
-        for item in pr_data: 
-            list_pr_comments.append(item["body"]) 
+        
+        repo_dict = []
+        for item in pr_data:
+            single_comments ={
+                "comment": item["body"],
+                "code_snippet": item["diff_hunk"]
+            }  
+            repo_dict.append(single_comments)
             
         pr_dict = {
             "repoName" : repo,
-            "prComments":list_pr_comments
+            "prComments":repo_dict
             }
         pr_allrepo_dict.append(pr_dict) 
+    print(pr_allrepo_dict)
     return pr_allrepo_dict
 
 #pr_dict = triggerGitAPIPullPRComments()
@@ -41,10 +50,11 @@ def triggerGitAPIPullPRComments():
 
 
 def fetchReusableMethodsFromAutomationRepo():
+    pat_token = os.getenv('REPO_ACCESS_TOKEN')
     headers = {
         "Accept" : "application/vnd.github+json",
         "X-GitHub-Api-Version" :"2022-11-28",
-        "Authorization" : "Bearer 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"
+        "Authorization" : f"Bearer {pat_token}"
     }
 
     githubBaseURL = "https://api.github.com"
@@ -66,15 +76,16 @@ def fetchReusableMethodsFromAutomationRepo():
     
     return all_files
 
-def fetchFilesFromOpenPR():
+def fetchFilesFromOpenPR(prNumber):
+    pat_token = os.getenv('REPO_ACCESS_TOKEN')
     headers = {
         "Accept" : "application/vnd.github+json",
         "X-GitHub-Api-Version" :"2022-11-28",
-        "Authorization" : "Bearer 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"
+        "Authorization" : f"Bearer {pat_token}"
     }
 
     githubBaseURL = "https://api.github.com"
-    fetchFilesFromADirectory = "/repos/783967/SwagLabsAutomation/pulls/2/files"
+    fetchFilesFromADirectory = f"/repos/783967/SwagLabsAutomation/pulls/{prNumber}/files"
 
     all_reusable_files =  requests.get(githubBaseURL + fetchFilesFromADirectory, headers= headers).json()
     download_urls = []
@@ -94,4 +105,19 @@ def fetchFilesFromOpenPR():
         print(file)
     
     return all_files
-fetchReusableMethodsFromAutomationRepo()
+
+def fetchDiffFromPR(prNumber):
+    pat_token = os.getenv('REPO_ACCESS_TOKEN')
+    headers = {
+        "Accept" : "application/vnd.github.v3.diff",
+        "X-GitHub-Api-Version" :"2022-11-28",
+        "Authorization" : f"Bearer {pat_token}"
+    }
+
+    githubBaseURL = "https://api.github.com"
+    fetchDiffFromPR = f"/repos/783967/SwagLabsAutomation/pulls/{prNumber}"
+
+    diff_files =  requests.get(githubBaseURL + fetchDiffFromPR, headers= headers).text
+    print(diff_files)
+    return diff_files
+fetchFilesFromOpenPR(4)
