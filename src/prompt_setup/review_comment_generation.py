@@ -56,24 +56,54 @@ def setup_llm():
 # Run the code review with multiple contexts
 def run_code_review(llm, new_code, contexts):
     template = """
-    You are a code review assistant. Use the following reference contexts to review the new code:
-
-    - **Old Codes**: {old_codes}
-    - **Google Coding Standards**: {google_coding_standards}
-    - **Previous Review Comments**: {review_comments}
-    - **Reusable Utilities**: {reusable_utilities}
-
-    Review the new code provided below:
+    You are a **Java Code Review Assistant** with extensive experience in reviewing automation testing code, focusing on code quality, reusability, adherence to coding standards, and leveraging existing utilities for efficiency. Your expertise spans various testing frameworks, automation libraries, and design patterns in test automation.
+ 
+    Your role is to assist developers by providing **accurate, context-aware review comments**. Use the provided reference contexts to evaluate the new code carefully, and suggest actionable improvements.
+ 
+    **Reference Contexts**:
+    
+    1. **Old Codes**: {old_codes}
+    2. **Google Coding Standards**: {google_coding_standards}
+    3. **Previous Review Comments**: {review_comments}
+    4. **Reusable Utilities**: {reusable_utilities}
+ 
+    --- 
+ 
+    ### New Code to Review:
     {new_code}
-
-    For each issue found, provide your feedback in the following format:
-
-    - **File Name**: Name of the file where the issue is located.
-    - **Line Number**: Exact line number of the issue.
-    - **Issue**: Concisely describe the issue. Use the tone of feedback from "Previous Review Comments" where applicable. 
-    - If the issue violates Google coding standards, explicitly state: "As per Google coding standards, this is incorrect."
-    - Do not include recommendations or additional explanations. Keep feedback precise and to the point.
-    """
+ 
+    **Review Instructions**:
+ 
+    - For each issue found, provide detailed feedback in the following format:
+      - **File Path**: Provide the complete path from the project root to the file where the issue is located.
+      - **Line Number**: Specify the exact line number where the issue occurs.
+      - **Issue Description**: 
+        - Clearly and concisely describe the issue.
+        - If it violates Google coding standards, explicitly state: "As per Google coding standards, this is incorrect."
+        - If a reusable utility already exists for a custom method, suggest using the existing utility:
+          - Provide the method name and the full file path of the utility.
+        - If there is no reusable utility and the method is valid, acknowledge that creating a new method is acceptable.
+        - Check **Previous Review Comments** for recurring issues or patterns and validate whether similar issues are present in the new code.
+        
+ 
+    - **Tone of Feedback**: 
+      - Follow the professional tone and structure from **Previous Review Comments** where applicable.
+      - Be precise, clear, and concise. Avoid vague statements and redundant explanations.
+ 
+    - **Do Not**: 
+      - Suggest personal opinions or preferences.
+      - Recommend changes outside the scope of the provided contexts.
+ 
+    **Example Feedback Format**:
+ 
+    ```
+    - **File Path**: src/main/java/com/projectname/module/ClassName.java
+    - **Line Number**: 45
+    - **Issue**: Method `validateInput()` duplicates functionality available in the reusable utility `InputValidator.validate()`. 
+      Suggested Utility: `src/main/java/com/projectname/utils/InputValidator.java`.
+      As per Google coding standards, this is incorrect. Please use the existing utility for consistency and maintainability.
+    ```
+"""
 
     prompt = PromptTemplate(
         template=template,
@@ -93,27 +123,36 @@ def run_code_review(llm, new_code, contexts):
     return review
 
 # Perform the code review
-def code_review(new_code_file):
-    new_code_content = load_new_code(new_code_file)
+def code_review(new_code_files):
+    reviews = []
+    for new_code_content in new_code_files:
+        # Load contexts from different Chroma DBs
+        contexts = {
+            "old_codes": query_similar_code(load_chroma_db(old_code_dir), new_code_content),
+            "google_coding_standards": query_similar_code(load_chroma_db(coding_standards_dir), new_code_content),
+            "review_comments": query_similar_code(load_chroma_db(review_comments_dir), new_code_content),
+            "reusable_utilities": query_similar_code(load_chroma_db(reusable_utilities_dir), new_code_content),
+        }
+        
+        # Setup LLM and run review for the current file
+        llm = setup_llm()
+        review_comment = run_code_review(llm, new_code_content, contexts)
+        reviews.append(review_comment.content)
     
-    # Load contexts from different Chroma DBs
-    contexts = {
-        "old_codes": query_similar_code(load_chroma_db(old_code_dir), new_code_content),
-        "google_coding_standards": query_similar_code(load_chroma_db(coding_standards_dir), new_code_content),
-        "review_comments": query_similar_code(load_chroma_db(review_comments_dir), new_code_content),
-        "reusable_utilities": query_similar_code(load_chroma_db(reusable_utilities_dir), new_code_content)
-    }
+    return "\n\n".join(reviews)
 
-    # Setup LLM and run review
-    llm = setup_llm()
-    review_comments = run_code_review(llm, new_code_content, contexts)
-    
-    return review_comments
 
-# Example of how the code review would be run
+# Main function
 if __name__ == "__main__":
-    new_code_file = r"C:\Users\2322191\Downloads\CommonMethods.java"
-    review_comments = code_review(new_code_file)
-    print(f"Review Comments:\n{review_comments.content}")
+    # Fetch files from PR (returns a list of file contents)
+    new_code_files = fetchFilesFromOpenPR()
 
+    print('******************** Start New Code ******************************')
+    for index, file_content in enumerate(new_code_files, start=1):
+        print(f"File {index}: {file_content[:500]}...")  # Display a snippet for each file
+    print('******************** End New Code ******************************')
+
+    # Run the code review for all files
+    review_comments = code_review(new_code_files)
+    print(f"Review Comments:\n{review_comments}")
 
