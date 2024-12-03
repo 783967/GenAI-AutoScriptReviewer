@@ -58,7 +58,7 @@ def fetchReusableMethodsFromAutomationRepo():
     }
 
     githubBaseURL = "https://api.github.com"
-    fetchFilesFromADirectory = "/repos/783967/SwagLabsAutomation/contents/src/test/java/swaglabs/common?ref=main"
+    fetchFilesFromADirectory = "/repos/783967/SwagLabsAutomation/contents/src/main/java/swaglabs/common?ref=main"
 
     all_reusable_files =  requests.get(githubBaseURL + fetchFilesFromADirectory, headers= headers).json()
 
