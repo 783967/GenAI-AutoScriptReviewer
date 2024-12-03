@@ -55,6 +55,7 @@ def setup_llm():
 
 # Run the code review with multiple contexts
 def run_code_review(llm, new_code, contexts):
+    print('Prompt feed to LLM')
     template = """
     You are a **Java Code Review Assistant** with extensive experience in reviewing automation testing code, focusing on code quality, reusability, adherence to coding standards, and leveraging existing utilities for efficiency. Your expertise spans various testing frameworks, automation libraries, and design patterns in test automation.
  
@@ -118,26 +119,29 @@ def run_code_review(llm, new_code, contexts):
         "new_code": new_code
     }
 
+    print('Prompt feed to LLM2')
     sequence = prompt | llm
     review = sequence.invoke(reference_context)
+    print('Prompt feed to LLM3')
     return review
 
 # Perform the code review
 def code_review(new_code_files):
     reviews = []
-    for new_code_content in new_code_files:
+    new_code_content = new_code_files
+    
         # Load contexts from different Chroma DBs
-        contexts = {
-            "old_codes": query_similar_code(load_chroma_db(old_code_dir), new_code_content),
-            "google_coding_standards": query_similar_code(load_chroma_db(coding_standards_dir), new_code_content),
-            "review_comments": query_similar_code(load_chroma_db(review_comments_dir), new_code_content),
-            "reusable_utilities": query_similar_code(load_chroma_db(reusable_utilities_dir), new_code_content),
-        }
-        
-        # Setup LLM and run review for the current file
-        llm = setup_llm()
-        review_comment = run_code_review(llm, new_code_content, contexts)
-        reviews.append(review_comment.content)
+    contexts = {
+        "old_codes": query_similar_code(load_chroma_db(old_code_dir), new_code_content),
+        "google_coding_standards": query_similar_code(load_chroma_db(coding_standards_dir), new_code_content),
+        "review_comments": query_similar_code(load_chroma_db(review_comments_dir), new_code_content),
+        "reusable_utilities": query_similar_code(load_chroma_db(reusable_utilities_dir), new_code_content),
+    }
+    
+    # Setup LLM and run review for the current file
+    llm = setup_llm()
+    review_comment = run_code_review(llm, new_code_content, contexts)
+    reviews.append(review_comment.content)
     
     return "\n\n".join(reviews)
 
@@ -145,13 +149,14 @@ def code_review(new_code_files):
 # Main function
 if __name__ == "__main__":
     # Fetch files from PR (returns a list of file contents)
-    new_code_files = fetchFilesFromOpenPR()
+    new_code_files = fetchDiffFromPR(4)
 
-    print('******************** Start New Code ******************************')
+    '''print('******************** Start New Code ******************************')
     for index, file_content in enumerate(new_code_files, start=1):
         print(f"File {index}: {file_content[:500]}...")  # Display a snippet for each file
-    print('******************** End New Code ******************************')
+    print('******************** End New Code ******************************')'''
 
+    print(new_code_files)
     # Run the code review for all files
     review_comments = code_review(new_code_files)
     print(f"Review Comments:\n{review_comments}")
