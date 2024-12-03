@@ -118,6 +118,6 @@ def fetchDiffFromPR(prNumber):
     fetchDiffFromPR = f"/repos/783967/SwagLabsAutomation/pulls/{prNumber}"
 
     diff_files =  requests.get(githubBaseURL + fetchDiffFromPR, headers= headers, verify = False).text
-    print(diff_files)
+    #print(diff_files)
     return diff_files
 

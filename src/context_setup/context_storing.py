@@ -116,7 +116,7 @@ def setup_context(reference_files, google_coding_url, previous_review_json, reus
 if __name__ == "__main__":
     # Reference files
     reference_files = [] #Existing code in the repository
-    previous_review_json = triggerGitAPIPullPRComments() #Giving previous PR comments 
+    previous_review_json = triggerGitAPIPullPRComments() # Giving previous PR comments 
     reusable_utilities_json = fetchReusableMethodsFromAutomationRepo() #src/main/Java utilities
     
     setup_context(reference_files, "https://google.github.io/styleguide/javaguide.html", previous_review_json, reusable_utilities_json)

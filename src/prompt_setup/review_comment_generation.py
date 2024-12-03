@@ -150,7 +150,6 @@ def code_review(new_code_files):
 if __name__ == "__main__":
     # Fetch files from PR (returns a list of file contents)
     new_code_files = fetchDiffFromPR(4)
-
     '''print('******************** Start New Code ******************************')
     for index, file_content in enumerate(new_code_files, start=1):
         print(f"File {index}: {file_content[:500]}...")  # Display a snippet for each file
