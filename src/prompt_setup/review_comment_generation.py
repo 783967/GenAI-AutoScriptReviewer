@@ -48,7 +48,7 @@ def setup_llm():
     client = boto3.client('bedrock-runtime', region_name='us-west-2')
     llm = ChatBedrock(
         credentials_profile_name='default',
-        model_id='anthropic.claude-3-5-sonnet-20240620-v1:0',
+        model_id='anthropic.claude-3-5-sonnet-20241022-v2:0',
         client=client
     )
     return llm
