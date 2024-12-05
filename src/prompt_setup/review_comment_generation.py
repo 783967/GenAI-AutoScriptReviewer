@@ -15,7 +15,7 @@ from context_setup.FetchPRComments import *
 
 # Get dynamic base directory (root of the project)
 ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-base_persistent_dir = os.path.join(ROOT_DIRECTORY, "S3FilesForChromaDb", "vectors")
+base_persistent_dir = os.path.join(ROOT_DIRECTORY, "src", "vectors")
 
 old_code_dir = os.path.join(base_persistent_dir, "old_codes")
 coding_standards_dir = os.path.join(base_persistent_dir, "coding_standards")
@@ -77,7 +77,7 @@ def run_code_review(llm, new_code, contexts):
  
     - For each issue found, provide detailed feedback in the following format:
       - **File Path**: Provide the complete path from the project root to the file where the issue is located.
-      - **Line Number**: Specify the exact line number where the issue occurs.
+      - **Line Number**: Specify the exact line number where the issue occurs.And always give a exact number instead of range of line numbers For Example if line which has issue is from 14-16 or 118-124 , you just return the floor value of the range which is 14 and 118 in provided example
       - **Issue Description**: 
         - Clearly and concisely describe the issue.
         - If it violates Google coding standards, explicitly state: "As per Google coding standards, this is incorrect."
@@ -118,7 +118,7 @@ def run_code_review(llm, new_code, contexts):
         "reusable_utilities": "\n\n".join([doc.page_content for doc in contexts['reusable_utilities']]),
         "new_code": new_code
     }
-
+    #print('Master Log - All Context', reference_context)
     print('Prompt feed to LLM2')
     sequence = prompt | llm
     review = sequence.invoke(reference_context)
@@ -150,11 +150,7 @@ def code_review(new_code_files):
 if __name__ == "__main__":
     # Fetch files from PR (returns a list of file contents)
     new_code_files = fetchDiffFromPR(4)
-    '''print('******************** Start New Code ******************************')
-    for index, file_content in enumerate(new_code_files, start=1):
-        print(f"File {index}: {file_content[:500]}...")  # Display a snippet for each file
-    print('******************** End New Code ******************************')'''
-
+    
     print(new_code_files)
     # Run the code review for all files
     review_comments = code_review(new_code_files)
