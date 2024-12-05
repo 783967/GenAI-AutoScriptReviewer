@@ -1,140 +1,189 @@
 import os
 import json
+import hashlib
+import requests
 import boto3
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_aws import BedrockEmbeddings
-from langchain_chroma import Chroma
-from langchain_community.document_loaders import TextLoader
+from langchain.schema import Document
 from datetime import datetime
-from FetchPRComments import *
+from FetchPRComments import triggerGitAPIPullPRComments, fetchReusableMethodsFromAutomationRepo
+from langchain_aws import BedrockEmbeddings
 
-# AWS S3 bucket name
-S3_BUCKET_NAME = "uploadchromadbcontext"
+# AWS S3 bucket details
+S3_BUCKET_NAME = "uploadchromedatabasecontent"
+S3_REGION = "us-west-2"
 
 # Initialize S3 client
-s3_client = boto3.client('s3', region_name='us-west-2')  # Add your AWS region
+s3_client = boto3.client('s3', region_name=S3_REGION)
 
-# Get dynamic base directory (root of the project)
+# Base directory for metadata
 ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BASE_DIRECTORY = os.path.join(ROOT_DIRECTORY, "S3FilesForChromaDb", "vectors")
-
-# Paths for different vector storage subfolders
-OLD_CODES_DIR = os.path.join(BASE_DIRECTORY, "old_codes")
-CODING_STANDARDS_DIR = os.path.join(BASE_DIRECTORY, "coding_standards")
-REVIEW_COMMENTS_DIR = os.path.join(BASE_DIRECTORY, "review_comments")
-REUSABLE_UTILITIES_DIR = os.path.join(BASE_DIRECTORY, "reusable_utilities")
-
-# Metadata file to track vectorized files
+BASE_DIRECTORY = os.path.join(ROOT_DIRECTORY, "src", "vectors")
 METADATA_FILE = os.path.join(BASE_DIRECTORY, 'vectorized_metadata.json')
 
-# This function ensures that the necessary directories exist
-def ensure_directories():
-    if not os.path.exists(BASE_DIRECTORY):
-        os.makedirs(BASE_DIRECTORY)  # Create base directory if it doesn't exist
-    os.makedirs(OLD_CODES_DIR, exist_ok=True)
-    os.makedirs(CODING_STANDARDS_DIR, exist_ok=True)
-    os.makedirs(REVIEW_COMMENTS_DIR, exist_ok=True)
-    os.makedirs(REUSABLE_UTILITIES_DIR, exist_ok=True)
+# Vector storage subfolders (used to categorize context types)
+VECTOR_CATEGORIES = {
+    "old_codes": "old_codes",
+    "coding_standards": "coding_standards",
+    "review_comments": "review_comments",
+    "reusable_utilities": "reusable_utilities"
+}
 
-# This function loads the metadata file if it exists
+# Ensure directories and metadata file exist locally (optional for debugging)
+def ensure_directories():
+    os.makedirs(BASE_DIRECTORY, exist_ok=True)
+    if not os.path.exists(METADATA_FILE):
+        with open(METADATA_FILE, 'w') as f:
+            json.dump({}, f)
+
+# Load metadata (tracks files and their hashes)
 def load_metadata():
     if os.path.exists(METADATA_FILE):
         with open(METADATA_FILE, 'r') as f:
             return json.load(f)
     return {}
 
-# This function saves the metadata to track vectorized files
+# Save metadata
 def save_metadata(metadata):
-    # Create the directory if it doesn't exist
-    directory = os.path.dirname(METADATA_FILE)
-    if not os.path.exists(directory):
-        os.makedirs(directory)  # Create the directory if it doesn't exist
-    
-    # Save the metadata file
     with open(METADATA_FILE, 'w') as f:
         json.dump(metadata, f, indent=4)
 
-# Check if the file is new or has been modified since the last vectorization
-def is_file_modified(file_path, metadata):
-    last_modified_time = os.path.getmtime(file_path)  # Get the last modified timestamp
-    file_name = os.path.basename(file_path)
+# Generate a unique hash for content
+def generate_content_hash(content):
+    return hashlib.sha256(content.encode('utf-8')).hexdigest()
 
-    # Check if the file exists in metadata and compare its timestamp
-    if file_name in metadata and metadata[file_name] == last_modified_time:
-        return False  # File hasn't changed, no need to vectorize
-    return True  # File is new or modified
+# Check if content has been modified based on its hash
+def is_content_modified(content_hash, content_id, metadata):
+    return metadata.get(content_id) != content_hash
 
-# This function loads only new or modified files for vectorization
-def load_new_or_modified_files(file_paths, metadata):
-    new_docs = []
-    for file_path in file_paths:
-        if is_file_modified(file_path, metadata):
-            loader = TextLoader(file_path)
-            new_docs.extend(loader.load())
-    return new_docs
-
-# Same as previous but modified to handle new files only
-def split_context(docs):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    return splitter.split_documents(docs)
-
-# This function adds only the new documents to Chroma DB
-def store_new_context_in_chroma(splits, embedding_function, persist_directory):
-    chroma_db = Chroma(persist_directory=persist_directory, embedding_function=embedding_function)
-    chroma_db.add_texts([doc.page_content for doc in splits])  # Add new splits to the existing DB
-    return chroma_db
-
-# This function uploads a file to S3
-def upload_to_s3(file_path, bucket_name, s3_key):
+# Upload content to S3
+def upload_to_s3(content, category, content_id):
+    s3_key = f"{category}/{content_id}.json"
+    content_data = json.dumps(content)
     try:
-        s3_client.upload_file(file_path, bucket_name, s3_key)
-        print(f"Successfully uploaded {file_path} to {bucket_name}/{s3_key}")
+        s3_client.put_object(
+            Bucket=S3_BUCKET_NAME,
+            Key=s3_key,
+            Body=content_data,
+            ContentType="application/json"
+        )
+        print(f"[INFO] Uploaded {s3_key} to S3.")
     except Exception as e:
-        print(f"Error uploading {file_path} to S3: {e}")
+        print(f"[ERROR] Failed to upload {s3_key}: {e}")
 
-# This function uploads the Chroma DB content to S3
-def upload_chroma_db_to_s3(base_directory):
-    for root, dirs, files in os.walk(base_directory):
-        for file in files:
-            file_path = os.path.join(root, file)
-            s3_key = os.path.relpath(file_path, base_directory)
-            upload_to_s3(file_path, S3_BUCKET_NAME, s3_key)
+# Vectorize and upload content
+def vectorize_and_upload_content(content, content_id, category, metadata, embedding_function):
+    if not content.strip():
+        print(f"[WARNING] Content for {content_id} is empty, skipping vectorization.")
+        return
 
-# This function sets up the context for newly added or modified files and uploads to S3
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    docs = [Document(page_content=content)]
+    splits = splitter.split_documents(docs)
+
+    if not splits:
+        print(f"[WARNING] No splits created for {content_id}, skipping vectorization.")
+        return
+
+    split_texts = [split.page_content for split in splits]
+    embedding_data = {"chunks": split_texts}
+
+    upload_to_s3(embedding_data, category, content_id)
+    metadata[content_id] = generate_content_hash(content)
+
+# Fetch Google coding standards
+def fetch_google_coding_standards():
+    url = "https://google.github.io/styleguide/javaguide.html"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.text
+    return ""
+
+# Main context setup function
 def setup_context(reference_files, google_coding_url, previous_review_json, reusable_utilities_json):
-    ensure_directories()  # Ensure the base directory and subdirectories exist
-    metadata = load_metadata()  # Load the previous metadata
-    
-    # Step 1: Load new or modified files
-    new_context_docs = load_new_or_modified_files(reference_files, metadata)
-    
-    if not new_context_docs:
-        print("No new or modified files to vectorize.")
-        return None
+    ensure_directories()
+    metadata = load_metadata()
+    embedding_function = BedrockEmbeddings(credentials_profile_name='default', model_id='amazon.titan-embed-text-v1')
 
-    # Step 2: Split the new files into smaller chunks
-    splits = split_context(new_context_docs)
+    # Process reference files
+    for idx, ref_content in enumerate(reference_files):
+        content_id = f"Reference_{idx}"
+        content = ref_content.get("content", "")
+        content_hash = generate_content_hash(content)
+        if is_content_modified(content_hash, content_id, metadata):
+            vectorize_and_upload_content(content, content_id, VECTOR_CATEGORIES["old_codes"], metadata, embedding_function)
 
-    # Step 3: Store the new context in Chroma DB
-    embedding_function = BedrockEmbeddings()  # Initialize your embedding function here
-    chroma_db = store_new_context_in_chroma(splits, embedding_function, BASE_DIRECTORY)
+    # Process Google coding standards
+    google_coding_content = fetch_google_coding_standards()
+    content_hash = generate_content_hash(google_coding_content)
+    if is_content_modified(content_hash, "Google_Coding_Standards", metadata):
+        vectorize_and_upload_content(google_coding_content, "Google_Coding_Standards", VECTOR_CATEGORIES["coding_standards"], metadata, embedding_function)
 
-    # Step 4: Update metadata with new timestamps and save it
-    for doc in new_context_docs:
-        file_name = os.path.basename(doc.metadata['source'])
-        metadata[file_name] = os.path.getmtime(doc.metadata['source'])
+    # Function to Process Previous PR Comments
+    for repo_data in previous_review_json:
+        pr_comments = repo_data.get("prComments", [])
+        for idx, pr_comment in enumerate(pr_comments):
+            comment_text = pr_comment.get("comment", "")
+            code_snippet = pr_comment.get("code_snippet", "")
+
+            # Debug logs to trace values
+            print(f"Master Log - PR Comment Text: {comment_text}")
+            print(f"Master Log - PR Code Snippet: {code_snippet}")
+
+            # Generate unique IDs for comment and snippet
+            comment_id = f"PR_Comment_{idx}_Text"
+            snippet_id = f"PR_Comment_{idx}_Snippet"
+
+            # Generate hashes for the content
+            comment_hash = generate_content_hash(comment_text)
+            snippet_hash = generate_content_hash(code_snippet)
+
+            # Debug logs for hash
+            print(f"Master Log - Comment Hash: {comment_hash}")
+            print(f"Master Log - Snippet Hash: {snippet_hash}")
+
+            # Only vectorize if the content has been modified
+            if comment_text and is_content_modified(comment_hash, comment_id, metadata):
+                vectorize_and_upload_content(comment_text, comment_id, VECTOR_CATEGORIES["review_comments"], metadata, embedding_function)
+            if code_snippet and is_content_modified(snippet_hash, snippet_id, metadata):
+                vectorize_and_upload_content(code_snippet, snippet_id, VECTOR_CATEGORIES["review_comments"], metadata, embedding_function)
+
+            # Save updated metadata after processing all comments
+            save_metadata(metadata)
+            print("[INFO] Context setup completed.")
+
     
+
+    # Process reusable utilities
+    for idx, utility in enumerate(reusable_utilities_json):
+        content_id = f"Reusable_Utility_{idx}"
+        utility_text = utility if isinstance(utility, str) else ""
+        content_hash = generate_content_hash(utility_text)
+        print("Master Log - Process reusable utilities",f" Comment Text: {utility_text}")
+        print("Master Log - Process reusable utilities",f" Code Snippet: {content_id}")
+        print("Master Log - Process reusable utilities",f" Code Snippet: {content_hash}")
+        if is_content_modified(content_hash, content_id, metadata):
+            vectorize_and_upload_content(utility_text, content_id, VECTOR_CATEGORIES["reusable_utilities"], metadata, embedding_function)
+
     save_metadata(metadata)
+    print("[INFO] Context setup completed.")
 
-    # Step 5: Upload Chroma DB content to S3
-    upload_chroma_db_to_s3(BASE_DIRECTORY)
-
-if __name__ == "__main__":
-   reference_files = [
-        r"C:\Users\viraj\eclipse-workspace2024AI\SeleniumFrameworkDesign\src\test\java\rahulshettyacademy\tests\ErrorValidationsTest.java",
-        r"C:\Users\viraj\eclipse-workspace2024AI\SeleniumFrameworkDesign\src\test\java\rahulshettyacademy\tests\SubmitOrderTest.java"
-    ]
-    previous_review_json = triggerGitAPIPullPRComments()
-    reusable_utilities_json = fetchReusableMethodsFromAutomationRepo()
     
-    setup_context(reference_files, "https://google.github.io/styleguide/javaguide.html", previous_review_json, reusable_utilities_json)
+
+
+
+
+# Example run
+if __name__ == "__main__":
+    previous_review_json = triggerGitAPIPullPRComments()
+    print('Master Log - triggerGitAPIPullPRComments()' , previous_review_json)
+    reusable_utilities_json = fetchReusableMethodsFromAutomationRepo()
+
+    reference_files = [
+        {"content": "public class Example { }"},
+        {"content": "public interface TestInterface { }"}
+    ]
+
+    setup_context(reference_files, "", previous_review_json, reusable_utilities_json)
+
+
