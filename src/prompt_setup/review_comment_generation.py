@@ -78,8 +78,17 @@ def run_code_review(llm, new_code, contexts):
  
     - For each issue found, provide detailed feedback in the following format:
       - **File Path**: Provide the complete path from the project root to the file where the issue is located.
-       - **Line Number**: Specify the exact line number where the issue occurs.And always give a exact number instead of range of line numbers For Example if line which has issue is from 14-16 or 118-124 , you just return the floor value of the range which is 14 and 118 in provided example.
-        Also most importantly you can derive line number using line number ranges provided in code snippet for example like -  (@@ -19,6 +19,8), (@@ -63,7 +65,7) - Such line numbers are given by git diff in context you can calculate exact line number using this as well
+      - **Line Number**: Specify the exact line number where the issue occurs. Use the logic described below to derive line numbers:
+        - **Logic for Line Numbers**:
+            - Use the `git diff` syntax provided in the context (e.g., `@@ -19,6 +19,8`).
+            - Identify the starting line number in the updated file (`+19` in this example).
+            - Add offsets to the starting line number for each subsequent line in the code snippet to pinpoint the exact location.
+            - When a range of lines (e.g., `@@ -63,7 +65,7`) is provided, ensure the exact line number is calculated within this range. 
+            - For example:
+                - If an issue occurs on the third line of a snippet starting at `+19`, the exact line number is `19 + 2 = 21`.
+                - If an issue occurs on the first line in the range starting at `+65`, the line number is `65`.
+            - Ensure precise calculations to avoid discrepancies.
+            
       - **Issue Description**: 
         - Clearly and concisely describe the issue.
         - If it violates Google coding standards, explicitly state: "As per Google coding standards, this is incorrect."
@@ -87,7 +96,10 @@ def run_code_review(llm, new_code, contexts):
           - Provide the method name and the full file path of the utility.
         - If there is no reusable utility and the method is valid, acknowledge that creating a new method is acceptable.
         - Check **Previous Review Comments** for recurring issues or patterns and validate whether similar issues are present in the new code.
-        
+    
+        - If the code is correct:
+        - Do not provide feedback. Clearly acknowledge the code is correct without suggesting unnecessary changes.
+
  
     - **Tone of Feedback**: 
       - Follow the professional tone and structure from **Previous Review Comments** where applicable.
