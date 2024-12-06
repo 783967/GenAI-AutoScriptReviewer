@@ -10,6 +10,7 @@ import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
 src_dir = os.path.abspath(os.path.join(current_dir, ".."))
 sys.path.append(src_dir)
+from write_pr_comments.write_pr_comments_to_git import write_comments_to_the_pr
 
 from context_setup.FetchPRComments import *
 
@@ -77,7 +78,7 @@ def run_code_review(llm, new_code, contexts):
  
     - For each issue found, provide detailed feedback in the following format:
       - **File Path**: Provide the complete path from the project root to the file where the issue is located.
-      - **Line Number**: Specify the exact line number where the issue occurs.
+      - **Line Number**: Specify the exact line number where the issue occurs. And always give a exact number instead of range of line numbers For Example if line which has issue is from 14-16 or 118-124 , you just return the floor value of the range which is 14 and 118 in provided example
       - **Issue Description**: 
         - Clearly and concisely describe the issue.
         - If it violates Google coding standards, explicitly state: "As per Google coding standards, this is incorrect."
@@ -149,7 +150,7 @@ def code_review(new_code_files):
 # Main function
 if __name__ == "__main__":
     # Fetch files from PR (returns a list of file contents)
-    new_code_files = fetchDiffFromPR(4)
+    new_code_files = fetchDiffFromPR(11)
     '''print('******************** Start New Code ******************************')
     for index, file_content in enumerate(new_code_files, start=1):
         print(f"File {index}: {file_content[:500]}...")  # Display a snippet for each file
@@ -159,4 +160,6 @@ if __name__ == "__main__":
     # Run the code review for all files
     review_comments = code_review(new_code_files)
     print(f"Review Comments:\n{review_comments}")
+    write_comments_to_the_pr(11,review_comments)
+    print("Method executed successfully")
 

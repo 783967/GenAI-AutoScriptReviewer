@@ -2,6 +2,9 @@ import requests
 #from dotenv import Secret
 import os
 import codecs
+import chardet
+import base64
+import re
 
 def triggerGitAPIPullPRComments():  
     pat_token = os.getenv('REPO_ACCESS_TOKEN')
@@ -101,8 +104,8 @@ def fetchFilesFromOpenPR(prNumber):
         r = requests.get(item, headers= headers, verify = False)
         all_files.append(codecs.decode(r.content, 'unicode_escape'))
 
-    for file in all_files:
-        print(file)
+    #for file in all_files:
+        #print(file)
     
     return all_files
 
@@ -116,8 +119,32 @@ def fetchDiffFromPR(prNumber):
 
     githubBaseURL = "https://api.github.com"
     fetchDiffFromPR = f"/repos/783967/SwagLabsAutomation/pulls/{prNumber}"
+    response_bytes  = requests.get(githubBaseURL + fetchDiffFromPR, headers= headers, verify = False).content.decode('latin1')
+    # Replace encoded characters in the input string
+    corrected_string = replace_encoded_chars(response_bytes)
 
-    diff_files =  requests.get(githubBaseURL + fetchDiffFromPR, headers= headers, verify = False).text
+    # Print the corrected string
+    #print(corrected_string)
+
+    # Detect the encoding of the response content
+    #encoding = chardet.detect(response_bytes.content)['encoding']
+    #decoded_response = codecs.decode(response_bytes.content, 'unicode_escape')
+    #try:
+    # Attempt to decode as base64
+     #   decoded_bytes = base64.b64decode(response_bytes.content)
+      #  decoded_response = decoded_bytes.decode('utf-8')
+    #except base64.binascii.Error:
+    # If not base64, decode directly
+     #   decoded_response = response_bytes.content.decode('utf-8')
+
+    # Decode the response content using the detected encoding
+    #decoded_response = response_bytes.content.decode(encoding)
+
     #print(diff_files)
-    return diff_files
+    return corrected_string
 
+# Function to replace encoded characters with their correct Unicode equivalents
+
+def replace_encoded_chars(text):
+    # Find all encoded characters in the format \xxx\xxx and replace them with their Unicode equivalents
+    return re.sub(r'\\(\d{3})\\(\d{3})', lambda m: bytes([int(m.group(1), 8), int(m.group(2), 8)]).decode('utf-8'), text)
