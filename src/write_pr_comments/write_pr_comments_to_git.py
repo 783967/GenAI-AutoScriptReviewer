@@ -58,7 +58,7 @@ def fetchRequiredFileDiff(filename, prNumber, lineCode):
               break
          
          
-    return line_number -1
+    return line_number 
     
 
 def fetch_content_after_separator(content, separator):
@@ -97,7 +97,7 @@ def write_comments_to_the_pr(prNumber, llmResponse):
              "body": issue_name
         }
         comments.append(transformed_comments)
-
+    print(comments)
     pat_token = os.getenv('REPO_ACCESS_TOKEN')
     headers = {
         "Accept" : "application/vnd.github+json",
@@ -105,6 +105,7 @@ def write_comments_to_the_pr(prNumber, llmResponse):
         "Authorization" : f"Bearer {pat_token}"
     }
     req_body = {
+        "body": "Few review comments:",
         "event": "REQUEST_CHANGES",
         "comments": comments
     }

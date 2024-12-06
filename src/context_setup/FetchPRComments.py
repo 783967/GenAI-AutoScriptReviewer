@@ -45,7 +45,7 @@ def triggerGitAPIPullPRComments():
             "prComments":repo_dict
             }
         pr_allrepo_dict.append(pr_dict) 
-    print(pr_allrepo_dict)
+    #print(pr_allrepo_dict)
     return pr_allrepo_dict
 
 #pr_dict = triggerGitAPIPullPRComments()
@@ -74,8 +74,8 @@ def fetchReusableMethodsFromAutomationRepo():
         r = requests.get(item, headers = headers, verify = False)
         all_files.append(codecs.decode(r.content, 'unicode_escape'))
 
-    for file in all_files:
-        print(file)
+    #for file in all_files:
+     #   print(file)
     
     return all_files
 
@@ -96,7 +96,7 @@ def fetchFilesFromOpenPR(prNumber):
         content_url_data = item["contents_url"]
         if ".log" not in content_url_data and ".html" not in content_url_data:
             content_res = requests.get(item["contents_url"], headers = headers, verify = False).json()
-            print(content_res)
+            #print(content_res)
             download_urls.append(content_res["download_url"])
 
     all_files = []
