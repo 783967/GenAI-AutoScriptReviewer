@@ -96,7 +96,8 @@ def run_code_review(llm, new_code, contexts):
  
     - For each issue found, provide detailed feedback in the following format:
       - **File Path**: Provide the complete path from the project root to the file where the issue is located.
-      - **Line Number**: Specify the exact line number where the issue occurs.And always give a exact number instead of range of line numbers For Example if line which has issue is from 14-16 or 118-124 , you just return the floor value of the range which is 14 and 118 in provided example
+      - **Line Number**: Specify the exact line number where the issue occurs.And always give a exact number instead of range of line numbers For Example if line which has issue is from 14-16 or 118-124 , you just return the floor value of the range which is 14 and 118 in provided example.
+        Also most importantly you can derive line number using line number ranges provided in code snippet for example like -  (@@ -19,6 +19,8), (@@ -63,7 +65,7) - Such line numbers are given by git diff in context you can calculate exact line number using this as well
       - **Issue Description**: 
         - Clearly and concisely describe the issue.
         - If it violates Google coding standards, explicitly state: "As per Google coding standards, this is incorrect."
