@@ -1,48 +1,65 @@
 import os
+import boto3
 from langchain.prompts import PromptTemplate
 from langchain_aws import ChatBedrock
 from langchain_chroma import Chroma
 from langchain.schema import AIMessage
-import boto3
 from langchain_aws import BedrockEmbeddings
 import sys
+import tempfile
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 src_dir = os.path.abspath(os.path.join(current_dir, ".."))
 sys.path.append(src_dir)
-from write_pr_comments.write_pr_comments_to_git import write_comments_to_the_pr
 
 from context_setup.FetchPRComments import *
 
-# Get dynamic base directory (root of the project)
-ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-base_persistent_dir = os.path.join(ROOT_DIRECTORY, "src", "vectors")
+# S3 Configuration
+s3_client = boto3.client('s3', region_name='us-west-2')
+S3_BUCKET_NAME = "uploadchromedatabasecontent"
+S3_VECTORS_PREFIX = "vectors"
 
-old_code_dir = os.path.join(base_persistent_dir, "old_codes")
-coding_standards_dir = os.path.join(base_persistent_dir, "coding_standards")
-review_comments_dir = os.path.join(base_persistent_dir, "review_comments")
-reusable_utilities_dir = os.path.join(base_persistent_dir, "reusable_utilities")
+# Temporary directory for storing downloaded vectors
+TEMP_DIR = tempfile.mkdtemp()
 
-# Ensure these directories exist
-os.makedirs(old_code_dir, exist_ok=True)
-os.makedirs(coding_standards_dir, exist_ok=True)
-os.makedirs(review_comments_dir, exist_ok=True)
-os.makedirs(reusable_utilities_dir, exist_ok=True)
+
+# Function to download vectors from S3 to a local directory
+def download_vectors_from_s3(s3_prefix, local_directory):
+    paginator = s3_client.get_paginator('list_objects_v2')
+    pages = paginator.paginate(Bucket=S3_BUCKET_NAME, Prefix=s3_prefix)
+
+    for page in pages:
+        if 'Contents' in page:
+            for obj in page['Contents']:
+                s3_key = obj['Key']
+                relative_path = os.path.relpath(s3_key, s3_prefix)
+                local_file_path = os.path.join(local_directory, relative_path)
+
+                os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+
+                # Download each file from S3
+                s3_client.download_file(S3_BUCKET_NAME, s3_key, local_file_path)
+
+
+# Function to load Chroma DB from the downloaded vectors
+def load_chroma_db(s3_prefix):
+    local_directory = os.path.join(TEMP_DIR, os.path.basename(s3_prefix))
+    download_vectors_from_s3(s3_prefix, local_directory)
+    embedding_function = BedrockEmbeddings(credentials_profile_name='default', model_id='amazon.titan-embed-text-v1')
+    return Chroma(persist_directory=local_directory, embedding_function=embedding_function)
+
 
 # Load new code from a file
 def load_new_code(file_path):
     with open(file_path, 'r') as file:
         return file.read()
 
-# Load Chroma DB for different contexts
-def load_chroma_db(persist_directory):
-    embedding_function = BedrockEmbeddings(credentials_profile_name='default', model_id='amazon.titan-embed-text-v1')
-    return Chroma(persist_directory=persist_directory, embedding_function=embedding_function)
 
 # Query for similarity search in a specific Chroma DB
 def query_similar_code(chroma_db, new_code_content):
     results = chroma_db.similarity_search(new_code_content, k=3)
     return results
+
 
 # Setup LLM
 def setup_llm():
@@ -53,6 +70,7 @@ def setup_llm():
         client=client
     )
     return llm
+
 
 # Run the code review with multiple contexts
 def run_code_review(llm, new_code, contexts):
@@ -78,7 +96,7 @@ def run_code_review(llm, new_code, contexts):
  
     - For each issue found, provide detailed feedback in the following format:
       - **File Path**: Provide the complete path from the project root to the file where the issue is located.
-      - **Line Number**: Specify the exact line number where the issue occurs. And always give a exact number instead of range of line numbers For Example if line which has issue is from 14-16 or 118-124 , you just return the floor value of the range which is 14 and 118 in provided example
+      - **Line Number**: Specify the exact line number where the issue occurs.And always give a exact number instead of range of line numbers For Example if line which has issue is from 14-16 or 118-124 , you just return the floor value of the range which is 14 and 118 in provided example
       - **Issue Description**: 
         - Clearly and concisely describe the issue.
         - If it violates Google coding standards, explicitly state: "As per Google coding standards, this is incorrect."
@@ -106,7 +124,6 @@ def run_code_review(llm, new_code, contexts):
       As per Google coding standards, this is incorrect. Please use the existing utility for consistency and maintainability.
     ```
 """
-
     prompt = PromptTemplate(
         template=template,
         input_variables=["old_codes", "google_coding_standards", "review_comments", "reusable_utilities", "new_code"]
@@ -119,46 +136,41 @@ def run_code_review(llm, new_code, contexts):
         "reusable_utilities": "\n\n".join([doc.page_content for doc in contexts['reusable_utilities']]),
         "new_code": new_code
     }
-    #print('Master Log - All Context', reference_context)
     print('Prompt feed to LLM2')
     sequence = prompt | llm
     review = sequence.invoke(reference_context)
     print('Prompt feed to LLM3')
     return review
 
+
 # Perform the code review
 def code_review(new_code_files):
     reviews = []
     new_code_content = new_code_files
-    
-        # Load contexts from different Chroma DBs
+   
+    # Load contexts from different Chroma DBs
     contexts = {
-        "old_codes": query_similar_code(load_chroma_db(old_code_dir), new_code_content),
-        "google_coding_standards": query_similar_code(load_chroma_db(coding_standards_dir), new_code_content),
-        "review_comments": query_similar_code(load_chroma_db(review_comments_dir), new_code_content),
-        "reusable_utilities": query_similar_code(load_chroma_db(reusable_utilities_dir), new_code_content),
+        "old_codes": query_similar_code(load_chroma_db(f"{S3_VECTORS_PREFIX}/old_codes"), new_code_content),
+        "google_coding_standards": query_similar_code(load_chroma_db(f"{S3_VECTORS_PREFIX}/coding_standards"), new_code_content),
+        "review_comments": query_similar_code(load_chroma_db(f"{S3_VECTORS_PREFIX}/review_comments"), new_code_content),
+        "reusable_utilities": query_similar_code(load_chroma_db(f"{S3_VECTORS_PREFIX}/reusable_utilities"), new_code_content),
     }
-    
+   
     # Setup LLM and run review for the current file
     llm = setup_llm()
     review_comment = run_code_review(llm, new_code_content, contexts)
     reviews.append(review_comment.content)
-    
+   
     return "\n\n".join(reviews)
 
 
 # Main function
 if __name__ == "__main__":
     # Fetch files from PR (returns a list of file contents)
-    new_code_files = fetchDiffFromPR(11)
-    '''print('******************** Start New Code ******************************')
-    for index, file_content in enumerate(new_code_files, start=1):
-        print(f"File {index}: {file_content[:500]}...")  # Display a snippet for each file
-    print('******************** End New Code ******************************')'''
+    new_code_files = fetchDiffFromPR(4)
     print(new_code_files)
     # Run the code review for all files
     review_comments = code_review(new_code_files)
     print(f"Review Comments:\n{review_comments}")
-    write_comments_to_the_pr(11,review_comments)
-    print("Method executed successfully")
+
 

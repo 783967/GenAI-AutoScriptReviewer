@@ -19,17 +19,17 @@ def fetchCodeFromFile(fileName,prNumber):
     }
      githubBaseURL = "https://api.github.com"
      fetchFilesFromADirectory = f"/repos/783967/SwagLabsAutomation/pulls/{prNumber}/files"
-     all_reusable_files =  requests.get(githubBaseURL + fetchFilesFromADirectory, headers= headers).json()
+     all_reusable_files =  requests.get(githubBaseURL + fetchFilesFromADirectory, headers= headers,verify= False).json()
     
      for item in all_reusable_files:
         content_url_data = item["filename"]
         if fileName in content_url_data:
-            content_res = requests.get(item["contents_url"], headers = headers).json()
+            content_res = requests.get(item["contents_url"], headers = headers,verify= False).json()
             #print(content_res)
             download_urls = content_res["download_url"]
             break
             
-     r = requests.get(download_urls, headers= headers)
+     r = requests.get(download_urls, headers= headers,verify= False)
      return codecs.decode(r.content, 'unicode_escape')
 
 

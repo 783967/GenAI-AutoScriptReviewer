@@ -1,0 +1,14 @@
+name: Run Python Script
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types:
+      - pr-raised
+
+jobs:
+  run-python-script:
+    runs-on: self-hosted
+    steps:
+      - name: Run Python Script
+        run: python test.py
