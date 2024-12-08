@@ -2,7 +2,7 @@ import requests
 #from dotenv import Secret
 import os
 import codecs
-import chardet
+#import chardet
 import base64
 import re
 
