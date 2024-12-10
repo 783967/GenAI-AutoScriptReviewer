@@ -95,7 +95,7 @@ def run_code_review(llm, new_code, contexts):
         - For a newly created file starting with '--- /dev/null' and followed by '@@ -0,0 +1,27 @@':
             - The counting starts from '1', the first line of the snippet.
             - I again repeat *Most Important*, for every file of git diff line number will start from 1. Follow line number from git diff file , don't give line number from original file.
-            For Example - You find Voilation in google coding Style on line number 22 in orignal file.But in ### New Code to Review: All files are coming from Git Diff and in Git diff has that same line on lin number 5 in code Snippet. So please dont return Line 22 , return line number 5. Please kindly understand this requirement very deeply and thoroughly and provide line number as requested. 
+            For Example - You find Voilation in google coding Style on line number 22 in orignal file.But in ### New Code to Review: All files are coming from Git Diff and in Git diff has that same line on line number 5 in code Snippet. So please don't return Line 22 , return line number 5. Please kindly understand this requirement very deeply and thoroughly and provide line number as requested. 
 
       - **Issue Code ** : Display the exact line of code that has an issue.
 
@@ -124,6 +124,7 @@ def run_code_review(llm, new_code, contexts):
     ```
     - **File Path**: src/main/java/com/projectname/module/ClassName.java
     - **Line Number**: 45
+    - **Issue Code**: Mention the code in that particular line.
     - **Issue**: Method `validateInput()` duplicates functionality available in the reusable utility `InputValidator.validate()`. 
       Suggested Utility: `src/main/java/com/projectname/utils/InputValidator.java`.
       As per Google coding standards, this is incorrect. Please use the existing utility for consistency and maintainability.
