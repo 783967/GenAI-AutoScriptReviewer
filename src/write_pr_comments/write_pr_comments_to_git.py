@@ -74,7 +74,7 @@ def fetch_content_after_separator(content, separator):
         return "First separator not found in the content."
     
 def find_line_number(code_string, target_line):
-    lines = code_string.split('\n')
+    lines = code_string.strip().split('\n')
     for i, line in enumerate(lines, start=1):
         if target_line.strip() in line.strip():
             return i
