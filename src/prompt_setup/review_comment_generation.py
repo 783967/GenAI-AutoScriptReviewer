@@ -57,6 +57,7 @@ def setup_llm():
 # Run the code review with multiple contexts
 def run_code_review(llm, new_code, contexts):
     print('Prompt feed to LLM')
+    print('***********New_Code********', new_code)
     template = """
     You are a **Java Code Review Assistant** with extensive experience in reviewing automation testing code, focusing on code quality, reusability, adherence to coding standards, and leveraging existing utilities for efficiency. Your expertise spans various testing frameworks, automation libraries, and design patterns in test automation.
  
@@ -78,17 +79,26 @@ def run_code_review(llm, new_code, contexts):
  
     - For each issue found, provide detailed feedback in the following format:
       - **File Path**: Provide the complete path from the project root to the file where the issue is located.
-      - **Line Number**: Specify the exact line number where the issue occurs. Use the logic described below to derive line numbers:
-        - **Logic for Line Numbers**:
-            - Use the `git diff` syntax provided in the context (e.g., `@@ -19,6 +19,8`).
-            - Identify the starting line number in the updated file (`+19` in this example).
-            - Add offsets to the starting line number for each subsequent line in the code snippet to pinpoint the exact location.
-            - When a range of lines (e.g., `@@ -63,7 +65,7`) is provided, ensure the exact line number is calculated within this range. 
-            - For example:
-                - If an issue occurs on the third line of a snippet starting at `+19`, the exact line number is `19 + 2 = 21`.
-                - If an issue occurs on the first line in the range starting at `+65`, the line number is `65`.
-            - Ensure precise calculations to avoid discrepancies.
-            
+    - **Line Number**: Specify the exact line number where the issue occurs.And always give a exact number instead of range of line numbers For Example if line which has issue is from 4-6 or 8-12 , you just return the floor value of the range which is 4 and 8 in provided example.
+    - Also make sure you follow below guidelines very Strictly to find line number. 
+    - The new code provided for review is extracted from **Git diff**, which includes multiple files and their updated snippets.
+        - How to Determine the **Line Number**:
+        - Each new file starts with a 'diff --git' statement (e.g., 'diff --git a/src/... b/src/...').
+        - For every file, use the '@@' syntax to find the starting point of line numbers.
+        - If the line starts with '@@ -X,Y +Z,W @@', the line counting starts from 1 from snippet and proceeds line by line until the end of the snippet. 
+        - If '--- /dev/null' is present at the beginning of a file, it signifies a newly created file, and the line counting starts from the first line of the snippet and count starts from 1.
+        - When a new 'diff --git' is encountered, it marks the start of a new file. Reset the counting for the new file accordingly.
+        - Examples:
+        - For a file starting with '@@ -19,6 +19,8 @@ @@ public class CommonMethods extends BasePage':
+            - The counting begins at line '1' for the updated code snippet and continues sequentially. It means '@@ public class CommonMethods extends BasePage' this line will be number 1
+            - If an issue is found on the third line of the snippet, the line number will be '3'.
+        - For a newly created file starting with '--- /dev/null' and followed by '@@ -0,0 +1,27 @@':
+            - The counting starts from '1', the first line of the snippet.
+            - I again repeat *Most Important*, for every file of git diff line number will start from 1. Follow line number from git diff file , don't give line number from original file.
+            For Example - You find Voilation in google coding Style on line number 22 in orignal file.But in ### New Code to Review: All files are coming from Git Diff and in Git diff has that same line on lin number 5 in code Snippet. So please dont return Line 22 , return line number 5. Please kindly understand this requirement very deeply and thoroughly and provide line number as requested. 
+
+      - **Issue Code ** : Display the exact line of code that has an issue.
+
       - **Issue Description**: 
         - Clearly and concisely describe the issue.
         - If it violates Google coding standards, explicitly state: "As per Google coding standards, this is incorrect."
