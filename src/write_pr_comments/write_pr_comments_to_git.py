@@ -121,12 +121,12 @@ def extract_review_comments(review_text):
     # Define the regex patterns to extract file name, line number, and issue
     file_name_pattern = r" \*\*File Path\*\*: (.+)"
     line_number_pattern = r" \*\*Line Number\*\*: (\d+)"
-    issue_pattern = r" \*\*Issue\*\*: (.+)"
+    issue_pattern = r"\*\*Issue\*\*:(.*?)(?=\n```|\Z)"
     
     # Find all matches for each pattern
     file_names = re.findall(file_name_pattern, review_text)
     line_numbers = re.findall(line_number_pattern, review_text)
-    issues = re.findall(issue_pattern, review_text)
+    issues = re.findall(issue_pattern, review_text, re.DOTALL)
     
     # Create a list of dictionaries to store the extracted information
     review_comments = []
@@ -134,7 +134,7 @@ def extract_review_comments(review_text):
         review_comments.append({
             "file_path": file_names[i],
             "line_number": int(line_numbers[i]),
-            "issue": issues[i]
+            "issue": issues[i].replace("```","")
         })
-    
+    print(review_comments)
     return review_comments
