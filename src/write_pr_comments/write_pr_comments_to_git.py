@@ -40,7 +40,7 @@ def splitFilesUsingSeparator(prNumber):
     list = diff_files.split("diff --git")
     return list
 
-def fetchRequiredFileDiff(filename, prNumber, lineCode):
+def fetchRequiredFileDiff(filename, prNumber,lineNumber, lineCode):
     updated_filename = "b/" +filename
     list = splitFilesUsingSeparator(prNumber)
     line_number=0
@@ -51,7 +51,10 @@ def fetchRequiredFileDiff(filename, prNumber, lineCode):
          if updated_filename in item:
               separator = "@@"
               content_after_separator = fetch_content_after_separator(item, separator)
-              line_number = find_line_number(content_after_separator, lineCode)
+              content_after_separator = content_after_separator.encode('latin1').decode('utf-8')
+              line_number = find_line_number(content_after_separator, lineNumber,lineCode)
+              if line_number==-1:
+                  line_number = find_line_number_entire_file(content_after_separator,lineCode)
               #print(line_number)
               return line_number
               #post_pr_comment(prNumber,[{"file_name": "src/test/java/swaglabs/tests/validateHomePageTest.java", "line_number": 6, "issue": "Please add more information here, and fix this typo."}, {"filename": "src/test/java/swaglabs/tests/validateLoginPageTest.java", "line_number": 10, "pr_comment": "Ensure the login button is visible."}])
@@ -73,10 +76,23 @@ def fetch_content_after_separator(content, separator):
     else:
         return "First separator not found in the content."
     
-def find_line_number(code_string, target_line):
+def find_line_number(code_string, target_line_number,target_line):
     lines = code_string.strip().split('\n')
-    for i, line in enumerate(lines, start=1):
+    if target_line_number-10>0:
+
+        start=target_line_number-10
+    else:
+        start=1
+
+    if (target_line_number+10)<(len(lines)-1):
+        end=target_line_number+10
+    else:
+        end=(len(lines)-1)
+    
+    for i, line in enumerate(lines[start:end], start=start):
         if target_line.strip() in line.strip():
+            if code_string[0]=='\n':
+                i=i+1
             return i
     return -1
 
@@ -87,10 +103,11 @@ def write_comments_to_the_pr(prNumber, llmResponse):
         fileName = comment_dict['file_path']
         lineNumber = comment_dict['line_number']
         issue_name = comment_dict['issue']
-        fileContent = fetchCodeFromFile(fileName,prNumber)
-        lines = fileContent.split('\n')
-        line_code = lines[lineNumber-1]
-        diff_line_number = fetchRequiredFileDiff(fileName,prNumber,line_code)
+        line_code = comment_dict['line_code']
+        #fileContent = fetchCodeFromFile(fileName,prNumber)
+        #lines = fileContent.split('\n')
+        #line_code = lines[lineNumber-1]
+        diff_line_number = fetchRequiredFileDiff(fileName,prNumber,lineNumber,line_code)
         transformed_comments={
              "path": fileName,
              "position": diff_line_number,
@@ -121,12 +138,14 @@ def extract_review_comments(review_text):
     # Define the regex patterns to extract file name, line number, and issue
     file_name_pattern = r" \*\*File Path\*\*: (.+)"
     line_number_pattern = r" \*\*Line Number\*\*: (\d+)"
-    issue_pattern = r"\*\*Issue\*\*:(.*?)(?=\n```|\Z)"
+    line_dode_pattern = r" \*\*Issue Code\*\*: (.+)"
+    issue_pattern = r" \*\*Issue\*\*:(.*?)```"
     
     # Find all matches for each pattern
     file_names = re.findall(file_name_pattern, review_text)
     line_numbers = re.findall(line_number_pattern, review_text)
-    issues = re.findall(issue_pattern, review_text, re.DOTALL)
+    issues = re.findall(issue_pattern, review_text,re.DOTALL)
+    line_code = re.findall(line_dode_pattern,review_text)
     
     # Create a list of dictionaries to store the extracted information
     review_comments = []
@@ -134,7 +153,28 @@ def extract_review_comments(review_text):
         review_comments.append({
             "file_path": file_names[i],
             "line_number": int(line_numbers[i]),
-            "issue": issues[i].replace("```","")
+            "issue": issues[i],
+            "line_code": line_code[i],
         })
     print(review_comments)
     return review_comments
+
+def find_line_number_entire_file(code_string, target_line_number,target_line):
+    lines = code_string.strip().split('\n')
+    if target_line_number-10>0:
+
+        start=target_line_number-10
+    else:
+        start=0
+
+    if (target_line_number+10)<(len(lines)-1):
+        end=target_line_number+10
+    else:
+        end=(len(lines)-1)
+    
+    for i, line in enumerate(lines, start=1):
+        if target_line.strip() in line.strip():
+            if code_string[0]=='\n':
+                i=i+1
+            return i
+    return -1
