@@ -50,7 +50,12 @@ def setup_llm():
     llm = ChatBedrock(
         credentials_profile_name='default',
         model_id='anthropic.claude-3-5-sonnet-20241022-v2:0',
-        client=client
+        client=client,
+        model_kwargs={
+            "temperature": 0.0,
+            "top_k": 10,
+            "top_p": 0.01
+        }
     )
     return llm
 
