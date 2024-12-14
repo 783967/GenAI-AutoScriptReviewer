@@ -54,7 +54,7 @@ def fetchRequiredFileDiff(filename, prNumber,lineNumber, lineCode):
               content_after_separator = content_after_separator.encode('latin1').decode('utf-8')
               line_number = find_line_number(content_after_separator, lineNumber,lineCode)
               if line_number==-1:
-                  line_number = find_line_number_entire_file(content_after_separator,lineCode)
+                  line_number = find_line_number_entire_file(content_after_separator,lineNumber,lineCode)
               #print(line_number)
               return line_number
               #post_pr_comment(prNumber,[{"file_name": "src/test/java/swaglabs/tests/validateHomePageTest.java", "line_number": 6, "issue": "Please add more information here, and fix this typo."}, {"filename": "src/test/java/swaglabs/tests/validateLoginPageTest.java", "line_number": 10, "pr_comment": "Ensure the login button is visible."}])
@@ -159,22 +159,11 @@ def extract_review_comments(review_text):
     print(review_comments)
     return review_comments
 
-def find_line_number_entire_file(code_string, target_line_number,target_line):
+def find_line_number_entire_file(code_string,target_line_number, target_line):
     lines = code_string.strip().split('\n')
-    if target_line_number-10>0:
-
-        start=target_line_number-10
-    else:
-        start=0
-
-    if (target_line_number+10)<(len(lines)-1):
-        end=target_line_number+10
-    else:
-        end=(len(lines)-1)
-    
     for i, line in enumerate(lines, start=1):
         if target_line.strip() in line.strip():
             if code_string[0]=='\n':
                 i=i+1
             return i
-    return -1
+    return target_line_number

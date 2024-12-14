@@ -95,7 +95,7 @@ def load_and_vectorize_new_content(content, content_id, metadata, embedding_func
 # Fetch Google coding standards from a predefined URL
 def fetch_google_coding_standards():
     url = "https://google.github.io/styleguide/javaguide.html"  # URL for Google's Java coding standards
-    response = requests.get(url)  # Make an HTTP GET request to fetch the content
+    response = requests.get(url,verify=False)  # Make an HTTP GET request to fetch the content
     if response.status_code == 200:  # Check if the request was successful
         print("[INFO] Fetched Google Coding Standards.")  # Log success
         return response.text  # Return the fetched content as text

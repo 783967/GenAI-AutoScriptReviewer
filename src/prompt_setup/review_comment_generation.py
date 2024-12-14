@@ -129,7 +129,7 @@ def run_code_review(llm, new_code, contexts):
     ```
     - **File Path**: src/main/java/com/projectname/module/ClassName.java
     - **Line Number**: 45
-    - **Issue Code**: Mention the code in that particular line.
+    - **Issue Code**: Mention the code in that particular line. It should be exactly same line which is present in the git-diff file. Please do not merge or modify the line with other lines
     - **Issue**: Method `validateInput()` duplicates functionality available in the reusable utility `InputValidator.validate()`. 
       Suggested Utility: `src/main/java/com/projectname/utils/InputValidator.java`.
       As per Google coding standards, this is incorrect. Please use the existing utility for consistency and maintainability.
