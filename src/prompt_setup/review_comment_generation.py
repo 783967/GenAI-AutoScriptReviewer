@@ -149,7 +149,7 @@ def run_code_review(llm, new_code, contexts):
         template=template,
         input_variables=["old_codes", "google_coding_standards", "review_comments", "reusable_utilities", "new_code"]
     )
-    '''
+    """
     response = requests.get("https://google.github.io/styleguide/javaguide.html",verify=False)
     reference_context = {
         "old_codes": "\n\n".join([doc.page_content for doc in contexts['old_codes']]),
@@ -174,7 +174,7 @@ def run_code_review(llm, new_code, contexts):
     #print("------------",formatted_prompt)
     review = llm(formatted_prompt)
     return review
-    '''
+    """
     response = requests.get("https://google.github.io/styleguide/javaguide.html", verify=False)
     reference_context = {
         "old_codes": "\n\n".join([doc.page_content for doc in contexts['old_codes']]),
@@ -196,6 +196,7 @@ def run_code_review(llm, new_code, contexts):
     # Print the exact prompt sent to the LLM
     print("Exact Prompt Sent to LLM:")
     #print(formatted_prompt)
+    """
     file_path = r"C:\Users\2322191\Downloads\Prompt_feeded.txt"
     file_path2 = r"C:\Users\2322191\Downloads\Review_comments.txt"
     # Write the content to the file
@@ -203,11 +204,11 @@ def run_code_review(llm, new_code, contexts):
         file.write(formatted_prompt)
 
     print(f"Message saved to {file_path}")
-
+    """
     # Feed the formatted prompt to the LLM
     review = llm.invoke(formatted_prompt)
-    with open(file_path2, "w", encoding="utf-8") as file:
-        file.write(str(review))
+    #with open(file_path2, "w", encoding="utf-8") as file:
+     #   file.write(str(review))
     return review
 
 # Perform the code review

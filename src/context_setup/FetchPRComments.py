@@ -117,6 +117,7 @@ def fetchDiffFromPR(prNumber):
         "Authorization" : f"Bearer {pat_token}"
     }
 
+
     githubBaseURL = "https://api.github.com"
     fetchDiffFromPR = f"/repos/783967/SwagLabsAutomation/pulls/{prNumber}"
     response_bytes  = requests.get(githubBaseURL + fetchDiffFromPR, headers= headers).content.decode('latin1')

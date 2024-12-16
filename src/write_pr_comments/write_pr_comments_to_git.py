@@ -17,6 +17,7 @@ def fetchCodeFromFile(fileName,prNumber):
         "X-GitHub-Api-Version" :"2022-11-28",
         "Authorization" : f"Bearer {pat_token}"
     }
+     
      githubBaseURL = "https://api.github.com"
      fetchFilesFromADirectory = f"/repos/783967/SwagLabsAutomation/pulls/{prNumber}/files"
      all_reusable_files =  requests.get(githubBaseURL + fetchFilesFromADirectory, headers= headers,verify= False).json()
@@ -156,7 +157,7 @@ def extract_review_comments(review_text):
             "issue": issues[i],
             "line_code": line_code[i],
         })
-    print(str(review_comments).encode('utf-8'))
+    #print(str(review_comments).encode('utf-8'))
     return review_comments
 
 def find_line_number_entire_file(code_string,target_line_number, target_line):
