@@ -6,9 +6,12 @@ on:
     types:
       - pr-raised
 
+  env:
+    PR_NUMBER: ${{ github.event.number }}
+
 jobs:
   run-python-script:
     runs-on: self-hosted
     steps:
       - name: Run Python Script
-        run: python test.py
+        run: python test.py ${{github.env.PR_NUMBER}}
