@@ -16,7 +16,7 @@ def triggerGitAPIPullPRComments():
 
     githubBaseURL = "https://api.github.com"
     fetchAllReposURL = "/users/783967/repos"
-    all_repo_details =  requests.get(githubBaseURL + fetchAllReposURL, headers= headers, verify=False).json()
+    all_repo_details =  requests.get(githubBaseURL + fetchAllReposURL, headers= headers).json()
 
     list_all_repos =[]
     for item in all_repo_details:
@@ -25,7 +25,7 @@ def triggerGitAPIPullPRComments():
     pr_allrepo_dict = []
     for repo in list_all_repos:
         githubPullCommentsEndpoint = "/repos/783967/"+repo+"/pulls/comments"
-        response = requests.get(githubBaseURL + githubPullCommentsEndpoint, headers= headers, verify=False)
+        response = requests.get(githubBaseURL + githubPullCommentsEndpoint, headers= headers)
 
         pr_data = response.json()
         if len(pr_data) == 0:
@@ -63,7 +63,7 @@ def fetchReusableMethodsFromAutomationRepo():
     githubBaseURL = "https://api.github.com"
     fetchFilesFromADirectory = "/repos/783967/SwagLabsAutomation/contents/src/main/java/swaglabs/common?ref=main"
 
-    all_reusable_files =  requests.get(githubBaseURL + fetchFilesFromADirectory, headers= headers, verify=False).json()
+    all_reusable_files =  requests.get(githubBaseURL + fetchFilesFromADirectory, headers= headers).json()
 
     download_urls = []
     for item in all_reusable_files:
@@ -71,7 +71,7 @@ def fetchReusableMethodsFromAutomationRepo():
 
     all_files = []
     for item in download_urls:
-        r = requests.get(item, headers = headers, verify=False)
+        r = requests.get(item, headers = headers)
         all_files.append(codecs.decode(r.content, 'unicode_escape'))
 
     #for file in all_files:
@@ -90,18 +90,18 @@ def fetchFilesFromOpenPR(prNumber):
     githubBaseURL = "https://api.github.com"
     fetchFilesFromADirectory = f"/repos/783967/SwagLabsAutomation/pulls/{prNumber}/files"
 
-    all_reusable_files =  requests.get(githubBaseURL + fetchFilesFromADirectory, headers= headers, verify=False).json()
+    all_reusable_files =  requests.get(githubBaseURL + fetchFilesFromADirectory, headers= headers).json()
     download_urls = []
     for item in all_reusable_files:
         content_url_data = item["contents_url"]
         if ".log" not in content_url_data and ".html" not in content_url_data:
-            content_res = requests.get(item["contents_url"], headers = headers, verify=False).json()
+            content_res = requests.get(item["contents_url"], headers = headers).json()
             #print(content_res)
             download_urls.append(content_res["download_url"])
 
     all_files = []
     for item in download_urls:
-        r = requests.get(item, headers= headers, verify=False)
+        r = requests.get(item, headers= headers)
         all_files.append(codecs.decode(r.content, 'unicode_escape'))
 
     #for file in all_files:
@@ -119,7 +119,7 @@ def fetchDiffFromPR(prNumber):
 
     githubBaseURL = "https://api.github.com"
     fetchDiffFromPR = f"/repos/783967/SwagLabsAutomation/pulls/{prNumber}"
-    response_bytes  = requests.get(githubBaseURL + fetchDiffFromPR, headers= headers, verify=False).content.decode('latin1')
+    response_bytes  = requests.get(githubBaseURL + fetchDiffFromPR, headers= headers).content.decode('latin1')
     # Replace encoded characters in the input string
     corrected_string = replace_encoded_chars(response_bytes)
 

@@ -114,7 +114,7 @@ def write_comments_to_the_pr(prNumber, llmResponse):
              "body": issue_name
         }
         comments.append(transformed_comments)
-    print(comments)
+    print(str(comments).encode('utf-8'))
     pat_token = os.getenv('REPO_ACCESS_TOKEN')
     headers = {
         "Accept" : "application/vnd.github+json",
@@ -130,7 +130,7 @@ def write_comments_to_the_pr(prNumber, llmResponse):
     githubBaseURL = "https://api.github.com"
     fetchFilesFromADirectory = f"/repos/783967/SwagLabsAutomation/pulls/{prNumber}/reviews"
     post_review =  requests.post(githubBaseURL + fetchFilesFromADirectory, headers= headers,json=req_body)
-    print(post_review.status_code)
+    print(str(post_review.status_code).encode('utf-8'))
     if post_review.status_code ==200:
         return 
 
@@ -156,7 +156,7 @@ def extract_review_comments(review_text):
             "issue": issues[i],
             "line_code": line_code[i],
         })
-    print(review_comments)
+    print(str(review_comments).encode('utf-8'))
     return review_comments
 
 def find_line_number_entire_file(code_string,target_line_number, target_line):
