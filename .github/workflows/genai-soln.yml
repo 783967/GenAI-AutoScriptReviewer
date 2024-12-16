@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Get PR Number
         id: get-pr-number
-        uses: mgaitan/gha-get-pr-number@main
+        uses: 8BitJonny/gh-get-current-pr@3.0.0
 
       - name: Run Python Script
         run: python test.py ${{ steps.get-pr-number.outputs.number }}
