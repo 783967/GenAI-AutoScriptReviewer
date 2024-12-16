@@ -7,6 +7,8 @@ import boto3
 from langchain_aws import BedrockEmbeddings
 import sys
 
+pr_number = sys.argv[1]
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 src_dir = os.path.abspath(os.path.join(current_dir, ".."))
 sys.path.append(src_dir)
@@ -179,7 +181,7 @@ def code_review(new_code_files):
 # Main function
 if __name__ == "__main__":
     # Fetch files from PR (returns a list of file contents)
-    new_code_files = fetchDiffFromPR(11)
+    new_code_files = fetchDiffFromPR(pr_number)
     '''print('******************** Start New Code ******************************')
     for index, file_content in enumerate(new_code_files, start=1):
         print(f"File {index}: {file_content[:500]}...")  # Display a snippet for each file
@@ -188,6 +190,6 @@ if __name__ == "__main__":
     # Run the code review for all files
     review_comments = code_review(new_code_files)
     print(f"Review Comments:\n{review_comments}")
-    write_comments_to_the_pr(11,review_comments)
+    write_comments_to_the_pr(pr_number,review_comments)
     print("Method executed successfully")
 
