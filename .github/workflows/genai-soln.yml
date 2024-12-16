@@ -15,4 +15,4 @@ jobs:
     steps:
       - name: Run Python Script
         #run: python test.py ${{ github.event.pull_request.number }}
-        run: echo "The PR Number is ${{ github.event.pull_request.number }}"
+        run: echo "The PR Number is ${{ github.event.client_payload.pr_number }}"
