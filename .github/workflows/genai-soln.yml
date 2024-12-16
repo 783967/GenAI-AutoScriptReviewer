@@ -13,5 +13,9 @@ jobs:
   run-python-script:
     runs-on: self-hosted
     steps:
+      - name: Get PR Number
+        id: get-pr-number
+        uses: mgaitan/gha-get-pr-number@v1
+
       - name: Run Python Script
-        run: python test.py ${{github.event.number}}
+        run: python test.py ${{ steps.get-pr-number.outputs.number }}
