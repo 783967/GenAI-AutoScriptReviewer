@@ -13,6 +13,5 @@ jobs:
   run-python-script:
     runs-on: self-hosted
     steps:
-      - name: Run Python Script
-        run: python test.py ${{ github.event.client_payload.pr_number }}
-        #run: echo "The PR Number is ${{ github.event.client_payload.pr_number }}"
+      - name: Run Python Script for Review comment generation
+        run: python review_comment_generation.py ${{ github.event.client_payload.pr_number }}
