@@ -152,7 +152,7 @@ def extract_review_comments(review_text):
         print('issues[',i ,']=',issues[i])
     print('line_code = ', str(line_code).encode('utf-8'))
     print("Length of filename:",len(file_names))
-    print("Lenght of Issue:",len(issue))
+    print("Lenght of Issue:",len(issues))
     # Create a list of dictionaries to store the extracted information
     review_comments = []
     for i in range(len(file_names)):
