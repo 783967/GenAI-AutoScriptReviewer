@@ -177,8 +177,8 @@ def run_code_review(llm, new_code, contexts):
     review = llm.invoke(formatted_prompt)
     #with open(file_path2, "w", encoding="utf-8") as file:
      #   file.write(str(review))
-    file_path = r"C:\Users\2245968\Downloads\Prompt_feeded.txt"
-    file_path2 = r"C:\Users\2245968\Downloads\Review_comments.txt"
+    file_path = r"C:\Users\2322191\Downloads\Prompt_feeded.txt"
+    file_path2 = r"C:\Users\2322191\Downloads\Review_comments.txt"
     # Write the content to the file
     with open(file_path, "w", encoding="utf-8") as file:
         file.write(formatted_prompt)
@@ -223,8 +223,8 @@ if __name__ == "__main__":
     #print(new_code_files)
     # Run the code review for all files
     review_comments = code_review(new_code_files)
-    #print(f"Review Comments:\n{str(review_comments).encode('utf-8')}")
-    print(f"Review Comments:\n{review_comments}", "Ended")
+    print(f"Review Comments:\n{str(review_comments).encode('utf-8')}")
+    #print(f"Review Comments:\n{review_comments}", "Ended")
     write_comments_to_the_pr(pr_number,review_comments)
     print("Method executed successfully")
 

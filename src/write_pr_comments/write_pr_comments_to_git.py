@@ -42,7 +42,7 @@ def splitFilesUsingSeparator(prNumber):
     return list
 
 def fetchRequiredFileDiff(filename, prNumber,lineNumber, lineCode):
-    updated_filename = "b/" +filename
+    updated_filename = filename
     list = splitFilesUsingSeparator(prNumber)
     line_number=0
     for item in list:
@@ -148,20 +148,31 @@ def extract_review_comments(review_text):
     issues = re.findall(issue_pattern, review_text,re.DOTALL)
     line_code = re.findall(line_dode_pattern,review_text)
     
+    print('Issues = ', str(issues).encode('utf-8'))
+    print('line_code = ', str(line_code).encode('utf-8'))
     # Create a list of dictionaries to store the extracted information
     review_comments = []
     for i in range(len(file_names)):
         try:
-            print("Inside Try i= :"+ i)
-            review_comments.append({
-                "file_path": file_names[i],
-                "line_number": int(line_numbers[i]),
-                "issue": issues[i],
-                "line_code": line_code[i]
-                })
-        except:
-            print("Exception occured for i =:"+ i)
-       
+            print("Inside Try i= :", i)
+            file_path = str(file_names[i])
+            print('After File Path For i =' , i)
+            line_number = int(line_numbers[i])
+            print('After Line Number For i =' , i)
+            issue = str(issues[i])
+            print('After Issue For i =' , i)
+            line_code =  str(line_code[i])
+            print('After Line Code For i =' , i)
+            jsonres = {
+                "file_path": file_path,
+                "line_number": line_number,
+                "issue": issue,
+                "line_code": line_code
+                }
+            print(jsonres)
+            review_comments.append(jsonres)
+        except Exception as e:
+            print("Exception occured for i =:",i,"Exeception message: ",{str(e)})
     #print(str(review_comments).encode('utf-8'))
     return review_comments
 
