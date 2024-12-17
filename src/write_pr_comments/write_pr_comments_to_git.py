@@ -148,8 +148,11 @@ def extract_review_comments(review_text):
     issues = re.findall(issue_pattern, review_text,re.DOTALL)
     line_code = re.findall(line_dode_pattern,review_text)
     
-    print('Issues = ', str(issues).encode('utf-8'))
+    for i in range(len(issues)):
+        print('issues[',i ,']=',issues[i])
     print('line_code = ', str(line_code).encode('utf-8'))
+    print("Length of filename:",len(file_names))
+    print("Lenght of Issue:",len(issue))
     # Create a list of dictionaries to store the extracted information
     review_comments = []
     for i in range(len(file_names)):
