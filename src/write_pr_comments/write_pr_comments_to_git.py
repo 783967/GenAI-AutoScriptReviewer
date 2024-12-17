@@ -140,12 +140,13 @@ def extract_review_comments(review_text):
     file_name_pattern = r" \*\*File Path\*\*: (.+)"
     line_number_pattern = r" \*\*Line Number\*\*: (\d+)"
     line_dode_pattern = r" \*\*Issue Code\*\*: (.+)"
-    issue_pattern = r" \*\*Issue\*\*:(.*?)```"
+    issue_pattern = r'- \*\*Issue\*\*: (.+)'
     
     # Find all matches for each pattern
     file_names = re.findall(file_name_pattern, review_text)
     line_numbers = re.findall(line_number_pattern, review_text)
-    issues = re.findall(issue_pattern, review_text,re.DOTALL)
+    issues = re.findall(issue_pattern, review_text)
+    issues = re.findall(issue_pattern, review_text)
     line_code = re.findall(line_dode_pattern,review_text)
     
     for i in range(len(issues)):
@@ -153,24 +154,25 @@ def extract_review_comments(review_text):
     print('line_code = ', str(line_code).encode('utf-8'))
     print("Length of filename:",len(file_names))
     print("Lenght of Issue:",len(issues))
+    print("Lenght of Line code:",len(line_code))
     # Create a list of dictionaries to store the extracted information
     review_comments = []
     for i in range(len(file_names)):
         try:
             print("Inside Try i= :", i)
-            file_path = str(file_names[i])
-            print('After File Path For i =' , i)
+            file_path = file_names[i]
+            #print('After File Path For i =' , i)
             line_number = int(line_numbers[i])
-            print('After Line Number For i =' , i)
-            issue = str(issues[i])
-            print('After Issue For i =' , i)
-            line_code =  str(line_code[i])
-            print('After Line Code For i =' , i)
+            #print('After Line Number For i =' , i)
+            issue = issues[i]
+            #print('After Issue For i =' , i)
+            line_codes =  line_code[i]
+            #print('After Line Code For i =' , i)
             jsonres = {
                 "file_path": file_path,
                 "line_number": line_number,
                 "issue": issue,
-                "line_code": line_code
+                "line_code": line_codes
                 }
             print(jsonres)
             review_comments.append(jsonres)
@@ -187,3 +189,5 @@ def find_line_number_entire_file(code_string,target_line_number, target_line):
                 i=i+1
             return i
     return target_line_number
+
+#write_comments_to_the_pr(51,"""I\'ll review the code according to Google Java Style Guide and provide all violations in a single response:\n\n```\n1. **File Path**: src/test/java/swaglabs/TestSwaglabs/testJava.java\n- **Line Number**: 4\n- **Issue Code**: String XMLHTTPRequest="";\n- **Issue**: As per Google coding standards, this is incorrect. Variable name should be \'xmlHttpRequest\' in camelCase.\n\n2. **File Path**: src/test/java/swaglabs/TestSwaglabs/testJava.java\n- **Line Number**: 5\n- **Issue Code**: String newCustomerID = "";\n- **Issue**: As per Google coding standards, this is incorrect. Variable name should be \'newCustomerId\' in camelCase.\n\n3. **File Path**: src/test/java/swaglabs/TestSwaglabs/testJava.java\n- **Line Number**: 7\n- **Issue Code**: int turnOn2Sv=0;\n- **Issue**: As per Google coding standards, this is incorrect. Missing space around \'=\' operator.\n\n4. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 20\n- **Issue Code**: private int         x;\n- **Issue**: As per Google coding standards, this is incorrect. Excessive whitespace after variable type.\n\n5. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 21\n- **Issue Code**: int a, b,   c,  d;\n- **Issue**: As per Google coding standards, this is incorrect. Multiple variable declarations in one line and inconsistent spacing.\n\n6. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 22\n- **Issue Code**: String[][] u = {  {"foo"}   };\n- **Issue**: As per Google coding standards, this is incorrect. Excessive whitespace in array initialization.\n\n7. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 23\n- **Issue Code**: static public final String va = null;\n- **Issue**: As per Google coding standards, this is incorrect. Modifier order should be \'public static final\'.\n\n8. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 24\n- **Issue Code**: Long l = 43543543l;\n- **Issue**: As per Google coding standards, this is incorrect. Long suffix should be uppercase \'L\'.\n\n9. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 25\n- **Issue Code**: static final ImmutableList<String> immutaBLE = ImmutableList.of("Ed", "Ann");\n- **Issue**: As per Google coding standards, this is incorrect. Constant name should be in UPPER_SNAKE_CASE.\n\n10. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 26\n- **Issue Code**: String Non__cOnstant;\n- **Issue**: As per Google coding standards, this is incorrect. Variable name should be in camelCase without underscores.\n\n11. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 33\n- **Issue Code**: public void valiTheSwagLabsByLoginIntoItAndThenValidateUserIsSuccessfullyLandedIntoItAfterThatLogoutFromApplication(){\n- **Issue**: As per Google coding standards, this is incorrect. Method name is too long and missing space before opening brace.\n\n12. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 41\n- **Issue Code**: if(1>0)\n- **Issue**: As per Google coding standards, this is incorrect. Missing spaces around operator \'>\' and missing braces for if statement.\n\n13. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 46\n- **Issue Code**: } catch (Exception e) {}\n- **Issue**: As per Google coding standards, this is incorrect. Empty catch block without comment explaining why exception is ignored.\n\n14. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 47\n- **Issue Code**: new CommonMethods().click(null); new CommonMethods().launchUrl(null);\n- **Issue**: As per Google coding standards, this is incorrect. Multiple statements on same line.\n\n15. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 51\n- **Issue Code**: @Deprecated\t@NotNull @Override public String toString() {return null;};\n- **Issue**: As per Google coding standards, this is incorrect. Each annotation should be on its own line and missing space after method.\n\n16. **File Path**: src/test/java/swaglabs/tests/ui/FrameworkStandardViolationTest.java\n- **Line Number**: 16\n- **Issue Code**: @Test(description = "validate")\n- **Issue**: As per Google coding standards, this is incorrect. Test description is not descriptive enough.\n\n17. **File Path**: src/test/java/swaglabs/tests/ui/FrameworkStandardViolationTest.java\n- **Line Number**: 43\n- **Issue Code**: Thread.sleep(100);\n- **Issue**: As per Google coding standards, this is incorrect. Avoid using Thread.sleep in tests.\n\n18. **File Path**: src/main/java/swaglabs/pageobjects/SwagLabsHomePage.java\n- **Line Number**: 26\n- **Issue Code**: @FindBy(css=".app_logo")\n- **Issue**: As per Google coding standards, this is incorrect. Missing space after \'css=\'.\n\n19. **File Path**: src/main/java/swaglabs/pageobjects/LoginPage.java\n- **Line Number**: 23\n- **Issue Code**: public WebElement userName;\n- **Issue**: As per Google coding standards, this is incorrect. Public field should be private with getter/setter.\n\n20. **File Path**: src/main/java/swaglabs/pageobjects/LoginPage.java\n- **Line Number**: 26\n- **Issue Code**: public WebElement passWord;\n- **Issue**: As per Google coding standards, this is incorrect. Public field should be private with getter/setter.\n\n21. **File Path**: src/main/java/swaglabs/common/CommonMethods.java\n- **Line Number**: 96\n- **Issue Code**: if (!swagLabsHomePage.getValueFromEmptyCartBadge().isEmpty())\n- **Issue**: As per Google coding standards, this is incorrect. Missing braces for if statement block.\n\n22. **File Path**: src/main/java/swaglabs/components/BasePage.java\n- **Line Number**: 47\n- **Issue Code**: /** Get SCreenshot * @param testCaseName * @param driver\t * @return\t * @throws IOException\t */\n- **Issue**: As per Google coding standards, this is incorrect. Javadoc formatting is incorrect and contains typo in \'Screenshot\'.\n\n23. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 35\n- **Issue Code**: switch (1) {\n- **Issue**: As per Google coding standards, this is incorrect. Switch statement missing default case.\n\n24. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 54\n- **Issue Code**: return null;};\n- **Issue**: As per Google coding standards, this is incorrect. Extra semicolon after method closing brace.\n\n25. **File Path**: src/test/java/swaglabs/tests/ui/GOOGLECODE_VIOLATE/VALIDATE_Google_Standard_Violation_12s.java\n- **Line Number**: 1\n- **Issue Code**: package swaglabs.tests.ui.GOOGLECODE_VIOLATE;\n- **Issue**: As per Google coding standards, this is incorrect. Package name should be all lowercase without underscores.\n```""")
