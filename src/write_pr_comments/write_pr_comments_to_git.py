@@ -151,12 +151,17 @@ def extract_review_comments(review_text):
     # Create a list of dictionaries to store the extracted information
     review_comments = []
     for i in range(len(file_names)):
-        review_comments.append({
-            "file_path": file_names[i],
-            "line_number": int(line_numbers[i]),
-            "issue": issues[i],
-            "line_code": line_code[i],
-        })
+        try:
+            print("Inside Try i= :"+ i)
+            review_comments.append({
+                "file_path": file_names[i],
+                "line_number": int(line_numbers[i]),
+                "issue": issues[i],
+                "line_code": line_code[i]
+                })
+        except:
+            print("Exception occured for i =:"+ i)
+       
     #print(str(review_comments).encode('utf-8'))
     return review_comments
 

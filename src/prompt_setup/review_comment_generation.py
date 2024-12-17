@@ -7,7 +7,7 @@ import boto3
 from langchain_aws import BedrockEmbeddings
 import sys
 
-#pr_number = sys.argv[1]
+pr_number = sys.argv[1]
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 src_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -55,7 +55,7 @@ def setup_llm():
         client=client,
         model_kwargs={
             "temperature": 0.3,
-            "max_tokens" : 10000
+            "max_tokens" : 100000
         
         }
     )
@@ -142,6 +142,8 @@ def run_code_review(llm, new_code, contexts):
       Suggested Utility: `src/main/java/com/projectname/utils/InputValidator.java`.
       As per Google coding standards, this is incorrect. Please use the existing utility for consistency and maintainability.
     ```
+    Also NEVER Give half response stating *'I'll continue with more issues in the next response due to length limitations..'* OR ' Would you like me to continue with more issues?'
+    Please provide all issues in a single, uninterrupted response. Don’t split into multiple parts.
 """
 
 
@@ -149,32 +151,7 @@ def run_code_review(llm, new_code, contexts):
         template=template,
         input_variables=["old_codes", "google_coding_standards", "review_comments", "reusable_utilities", "new_code"]
     )
-    """
-    response = requests.get("https://google.github.io/styleguide/javaguide.html",verify=False)
-    reference_context = {
-        "old_codes": "\n\n".join([doc.page_content for doc in contexts['old_codes']]),
-        "google_coding_standards": response.text ,
-        "review_comments": "\n\n".join([doc.page_content for doc in contexts['review_comments']]),
-        "reusable_utilities": "\n\n".join([doc.page_content for doc in contexts['reusable_utilities']]),
-        "new_code": new_code
-    }
     
-    print("API Response",response.text)
-    #print("**Prompt**",template)
-    #print('Master Log - All Context', reference_context)
-    print('Prompt feed to LLM2')
-    sequence = prompt | llm
-    print("**Prompt Seq**",prompt)
-    #review = sequence.invoke(reference_context)
-    print('Prompt feed to LLM3')
-    #Format the prompt with actual context
-    formatted_prompt = prompt.format( old_codes=reference_context["old_codes"], google_coding_standards=reference_context["google_coding_standards"], review_comments=reference_context["review_comments"], reusable_utilities=reference_context["reusable_utilities"], new_code=reference_context["new_code"] )
-    # Print the exact prompt going to the LLM
-    print("Exact Prompt Sent to LLM:") 
-    #print("------------",formatted_prompt)
-    review = llm(formatted_prompt)
-    return review
-    """
     response = requests.get("https://google.github.io/styleguide/javaguide.html", verify=False)
     reference_context = {
         "old_codes": "\n\n".join([doc.page_content for doc in contexts['old_codes']]),
@@ -196,19 +173,22 @@ def run_code_review(llm, new_code, contexts):
     # Print the exact prompt sent to the LLM
     print("Exact Prompt Sent to LLM:")
     #print(formatted_prompt)
-    """
-    file_path = r"C:\Users\2322191\Downloads\Prompt_feeded.txt"
-    file_path2 = r"C:\Users\2322191\Downloads\Review_comments.txt"
-    # Write the content to the file
-    with open(file_path, "w", encoding="utf-8") as file:
-        file.write(formatted_prompt)
-
-    print(f"Message saved to {file_path}")
-    """
     # Feed the formatted prompt to the LLM
     review = llm.invoke(formatted_prompt)
     #with open(file_path2, "w", encoding="utf-8") as file:
      #   file.write(str(review))
+    file_path = r"C:\Users\2245968\Downloads\Prompt_feeded.txt"
+    file_path2 = r"C:\Users\2245968\Downloads\Review_comments.txt"
+    # Write the content to the file
+    with open(file_path, "w", encoding="utf-8") as file:
+        file.write(formatted_prompt)
+ 
+    print(f"Message saved to {file_path}")
+ 
+    # Feed the formatted prompt to the LLM
+    review = llm.invoke(formatted_prompt)
+    with open(file_path2, "w", encoding="utf-8") as file:
+        file.write(str(review))
     return review
 
 # Perform the code review
@@ -235,7 +215,7 @@ def code_review(new_code_files):
 # Main function
 if __name__ == "__main__":
     # Fetch files from PR (returns a list of file contents)
-    new_code_files = fetchDiffFromPR(35)
+    new_code_files = fetchDiffFromPR(pr_number)
     '''print('******************** Start New Code ******************************')
     for index, file_content in enumerate(new_code_files, start=1):
         print(f"File {index}: {file_content[:500]}...")  # Display a snippet for each file
@@ -245,6 +225,6 @@ if __name__ == "__main__":
     review_comments = code_review(new_code_files)
     #print(f"Review Comments:\n{str(review_comments).encode('utf-8')}")
     print(f"Review Comments:\n{review_comments}", "Ended")
-    write_comments_to_the_pr(35,review_comments)
+    write_comments_to_the_pr(pr_number,review_comments)
     print("Method executed successfully")
 
